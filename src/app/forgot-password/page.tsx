@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
   return (
     <section className="h-screen flex-1 overflow-hidden flex flex-col  bg-[#ED3237] font-montserrat py-5 ">
 
-      <div className="max-w-[1280px] w-[68%]  mx-auto ">
+      <div className="max-w-[1280px] w-[85%] md:w-[68%]  mx-auto ">
 
         {/* ================= TITLE ================= */}
         <h1 className="text-white text-2xl md:text-3xl xl:text-4xl 2xl:text-5xl font-extrabold text-center mb-6 sm:mb-10 tracking-wide">

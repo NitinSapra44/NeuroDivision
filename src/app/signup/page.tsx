@@ -64,7 +64,7 @@ export default function SignupPage() {
 
   return (
     <section className="flex-1 flex flex-col  bg-[#ED3237] font-montserrat py-5">
-      <div className="max-w-[1280px] w-[68%]  mx-auto">
+      <div className="max-w-[1280px] w-[85%] md:w-[68%]  mx-auto">
 
   
 
