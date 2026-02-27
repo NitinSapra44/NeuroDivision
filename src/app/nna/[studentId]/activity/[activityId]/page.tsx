@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { Home, Bell, User, Play } from "lucide-react"
+import { Home, Bell, User, Play, LogOut } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
+import { useAppContext } from "@/store/app-context"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
 import ResponseModal from "@/components/ui/ResponseModal"
 
@@ -37,9 +38,24 @@ function ActivityContent() {
   const sectionId = searchParams.get("section_id") ?? ""
   const sectionName = searchParams.get("section_name") ?? ""
 
+  const { clearContext } = useAppContext()
   const [activity, setActivity] = useState<ActivityDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    setLoggingOut(true)
+    try {
+      await supabase.auth.signOut()
+      clearContext()
+      router.push("/login")
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoggingOut(false)
+    }
+  }
   const [error, setError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [resultType, setResultType] = useState<"logrado" | "porLograr">("logrado")
@@ -229,6 +245,9 @@ function ActivityContent() {
           </button>
           <Bell className="w-12 h-12 text-black" />
           <User className="w-12 h-12 text-black" />
+          <button onClick={handleLogout} disabled={loggingOut}>
+            <LogOut className="w-12 h-12 text-black" />
+          </button>
         </div>
 
       </div>
@@ -240,6 +259,9 @@ function ActivityContent() {
         </button>
         <Bell className="w-6 h-6 text-black" />
         <User className="w-6 h-6 text-black" />
+        <button onClick={handleLogout} disabled={loggingOut}>
+          <LogOut className="w-6 h-6 text-black" />
+        </button>
       </div>
 
       <ResponseModal

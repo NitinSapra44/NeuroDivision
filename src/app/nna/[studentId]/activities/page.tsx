@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { Home, Bell, User } from "lucide-react"
+import { Home, Bell, User, LogOut } from "lucide-react"
 import Image from "next/image"
 import { supabase } from "@/lib/supabase/client"
+import { useAppContext } from "@/store/app-context"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
 
 // Matches view_nna_section_activities returned by get_nna_section_activities
@@ -29,9 +30,24 @@ function ActivitiesContent() {
   const sectionId = Number(searchParams.get("section_id"))
   const sectionName = searchParams.get("section_name") ?? "Sección"
 
+  const { clearContext } = useAppContext()
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    setLoggingOut(true)
+    try {
+      await supabase.auth.signOut()
+      clearContext()
+      router.push("/login")
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoggingOut(false)
+    }
+  }
 
   useEffect(() => {
     if (!sectionId) {
@@ -148,6 +164,9 @@ function ActivitiesContent() {
           </button>
           <Bell className="w-12 h-12 text-black stroke-[1.5]" />
           <User className="w-12 h-12 text-black stroke-[1.5]" />
+          <button onClick={handleLogout} disabled={loggingOut}>
+            <LogOut className="w-12 h-12 text-black stroke-[1.5]" />
+          </button>
         </div>
 
       </div>
@@ -159,6 +178,9 @@ function ActivitiesContent() {
         </button>
         <Bell className="w-6 h-6 text-black" />
         <User className="w-6 h-6 text-black" />
+        <button onClick={handleLogout} disabled={loggingOut}>
+          <LogOut className="w-6 h-6 text-black" />
+        </button>
       </div>
 
     </section>
