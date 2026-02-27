@@ -320,9 +320,18 @@ BEGIN
                 -- Solo metemos al JSON lo que tú quieres, ignorando el resto de la vista.
                 json_build_object(
                     'student_id', s.student_id,
-                    'full_name', s.full_name
+                    'full_name', s.full_name,
+                    'pending_assessment_url', (
+                        SELECT '/assessment/' || ari.id::text || '/' || COALESCE(ari.current_section_order, 1)::text
+                        FROM public.assessment_response_instance ari
+                        WHERE ari.nna_user_id = s.student_id
+                          AND ari.responsible_user_id = v_user_id
+                          AND ari.status != 'COMPLETED'
+                        ORDER BY ari.created_at DESC
+                        LIMIT 1
+                    )
                 ) ORDER BY s.full_name ASC
-            ) FILTER (WHERE s.is_manager = true), 
+            ) FILTER (WHERE s.is_manager = true),
             '[]'::json
         ),
 
@@ -333,7 +342,7 @@ BEGIN
                     'student_id', s.student_id,
                     'full_name', s.full_name
                 ) ORDER BY s.full_name ASC
-            ) FILTER (WHERE s.is_manager = false), 
+            ) FILTER (WHERE s.is_manager = false),
             '[]'::json
         )
 
