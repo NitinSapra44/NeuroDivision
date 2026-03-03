@@ -201,7 +201,7 @@ function NnaStudentContent() {
                   <div className="w-full h-5 sm:h-6 md:h-7 bg-black mt-2 md:mt-3 relative overflow-hidden">
                     <div
                       className="absolute left-0 top-0 h-full bg-[#F5D14E] transition-all"
-                      style={{ width: `${m.dynamic_percentage}%` }}
+                      style={{ width: `${m.section_progress_percentage}%` }}
                     />
                   </div>
                   <h3 className="text-[clamp(20px,1.8vw,36px)] mt-2 md:mt-3 font-light text-black leading-none">

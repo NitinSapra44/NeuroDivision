@@ -813,6 +813,8 @@ DECLARE
     -- Nuevas variables para la lógica de roles
     v_user_role_name text;
     v_target_template_type public.assessment_types; -- Variable del tipo ENUM
+    v_subscription_id bigint;
+    v_program_id bigint;
 BEGIN
     -- 1. Validaciones Básicas
     IF v_user_id IS NULL THEN RAISE EXCEPTION 'No autenticado'; END IF;
@@ -825,6 +827,24 @@ BEGIN
     -- 3. Vincular al Padre - ESTO SIEMPRE OCURRE
     INSERT INTO public.responsible_nna_user (nna_user, responsible_user, can_edit)
     VALUES (v_nna_id, v_user_id, true);
+
+    -- 3.5. Crear Enrollment en el Programa
+    SELECT s.id INTO v_subscription_id
+    FROM public.subscription s
+    WHERE s.responsible_user = v_user_id
+    AND s.is_active = true
+    LIMIT 1;
+
+    SELECT id INTO v_program_id
+    FROM public.program_template
+    WHERE is_active = true
+    ORDER BY created_at DESC
+    LIMIT 1;
+
+    IF v_subscription_id IS NOT NULL AND v_program_id IS NOT NULL THEN
+        INSERT INTO public.nna_program_enrollment (nna_user_id, program_id, subscription_id)
+        VALUES (v_nna_id, v_program_id, v_subscription_id);
+    END IF;
 
     -- 4. VERIFICAR PERMISOS DEL PLAN
     SELECT EXISTS (
