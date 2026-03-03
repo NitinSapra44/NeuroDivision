@@ -90,8 +90,8 @@ function ActivityContent() {
     setSaving(true)
     setError(null)
     try {
-      // submit_activity_result takes a boolean: true = logrado, false = por lograr
-      const { error: submitError } = await supabase.rpc("submit_activity_result", {
+      // save_activity_result takes a boolean: true = logrado, false = por lograr
+      const { error: submitError } = await supabase.rpc("save_activity_result", {
         p_nna_user_id: studentId,
         p_activity_id: activityId,
         p_result: resultType === "logrado",
@@ -268,6 +268,7 @@ function ActivityContent() {
         open={modalOpen}
         type={resultType}
         onClose={() => setModalOpen(false)}
+        onConfirm={handleConfirm}
       />
 
     </section>

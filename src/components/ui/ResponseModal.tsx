@@ -9,12 +9,14 @@ interface ResponseModalProps {
   open: boolean
   type: "logrado" | "porLograr"
   onClose: () => void
+  onConfirm: () => void
 }
 
 export default function ResponseModal({
   open,
   type,
   onClose,
+  onConfirm,
 }: ResponseModalProps) {
 
   const [mounted, setMounted] = useState(false)
@@ -73,12 +75,18 @@ export default function ResponseModal({
         <div className="flex flex-col gap-4 md:gap-6 xl:gap-8 2xl:gap-10">
 
           {/* Continue */}
-          <button className="w-full h-[clamp(52px,3vw,72px)] px-[clamp(16px,2vw,40px)] bg-[#ED3237] text-white text-[clamp(1rem,1.2vw,1.5rem)] font-bold rounded-full border-[4px] border-black hover:scale-[1.02] transition">
+          <button
+            onClick={onConfirm}
+            className="w-full h-[clamp(52px,3vw,72px)] px-[clamp(16px,2vw,40px)] bg-[#ED3237] text-white text-[clamp(1rem,1.2vw,1.5rem)] font-bold rounded-full border-[4px] border-black hover:scale-[1.02] transition"
+          >
             Continuar
           </button>
 
           {/* Back */}
-          <button className="w-full h-[clamp(52px,3vw,72px)] px-[clamp(16px,2vw,40px)] bg-black text-white text-[clamp(1rem,1.2vw,1.5rem)] font-bold rounded-full border-[4px] border-white hover:scale-[1.02] transition">
+          <button
+            onClick={onClose}
+            className="w-full h-[clamp(52px,3vw,72px)] px-[clamp(16px,2vw,40px)] bg-black text-white text-[clamp(1rem,1.2vw,1.5rem)] font-bold rounded-full border-[4px] border-white hover:scale-[1.02] transition"
+          >
             Volver
           </button>
 
