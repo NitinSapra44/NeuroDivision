@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Home, Bell, User, LogOut } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
@@ -49,8 +49,11 @@ function NnaStudentContent() {
   const studentId = params.studentId as string
 
   const { clearContext } = useAppContext()
+  const chartRef = useRef<HTMLDivElement>(null)
+  const [linePoints, setLinePoints] = useState("")
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [redirecting, setRedirecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
 
@@ -77,6 +80,7 @@ function NnaStudentContent() {
 
         // If assessment is still pending, resume it immediately
         if (rpcData?.view_mode === "REDIRECT" && rpcData?.redirect_url) {
+          setRedirecting(true)
           router.replace(rpcData.redirect_url)
           return
         }
@@ -94,7 +98,30 @@ function NnaStudentContent() {
     fetchDashboard()
   }, [studentId, router])
 
-  if (loading) {
+  const metrics = (data?.progress_metrics ?? []) as ProgressMetric[]
+
+  useEffect(() => {
+    const calculate = () => {
+      if (!chartRef.current || metrics.length < 2) return
+      const container = chartRef.current
+      const { height } = container.getBoundingClientRect()
+      const bars = container.querySelectorAll<HTMLElement>("[data-bar]")
+      if (bars.length === 0) return
+      const containerRect = container.getBoundingClientRect()
+      const pts = Array.from(bars).map(bar => {
+        const r = bar.getBoundingClientRect()
+        const x = r.left - containerRect.left + r.width / 2
+        const y = r.top - containerRect.top
+        return x.toFixed(1) + "," + y.toFixed(1)
+      }).join(" ")
+      setLinePoints(pts)
+    }
+    calculate()
+    window.addEventListener("resize", calculate)
+    return () => window.removeEventListener("resize", calculate)
+  }, [metrics])
+
+  if (loading || redirecting) {
     return (
       <div className="h-screen flex items-center justify-center bg-white">
         <div className="w-10 h-10 border-4 border-[#ED3237]/30 border-t-[#ED3237] rounded-full animate-spin" />
@@ -118,8 +145,7 @@ function NnaStudentContent() {
     )
   }
 
-  const { student, progress_metrics, permissions } = data
-  const metrics = progress_metrics ?? []
+  const { student, permissions } = data
 
   // Colour palette for domain cards (cycles if more than 5 sections)
   const cardColors = [
@@ -132,13 +158,13 @@ function NnaStudentContent() {
       <div className="flex w-full h-full flex-col md:flex-row">
 
         {/* ================= LEFT SIDEBAR ================= */}
-        <div className="hidden md:flex w-[clamp(240px,18vw,300px)] flex-col items-center pt-12 border-r border-gray-100">
+        <div className="hidden md:flex w-[clamp(240px,18vw,300px)] flex-col items-center pt-6 border-r border-gray-100">
 
           <div className="w-20 h-20 lg:w-28 lg:h-28 rounded-full bg-[#ED3237] flex items-center justify-center shadow-sm">
             <User className="w-10 h-10 lg:w-14 lg:h-14 text-white" />
           </div>
 
-          <h2 className="text-[#ED3237] text-[clamp(24px,2.5vw,48px)] font-bold mt-4 tracking-tight">
+          <h2 className="text-[#ED3237]  font-bold mt-4 tracking-tight">
             {student.first_name}
           </h2>
 
@@ -159,14 +185,32 @@ function NnaStudentContent() {
         {/* ================= MAIN CONTENT ================= */}
         <div className="flex-1 h-full px-[clamp(16px,3vw,80px)] pt-6 md:pt-8 pb-24 md:pb-8 overflow-auto overflow-x-hidden">
 
+          {/* MOBILE STARS — shown only on mobile */}
+          {metrics.length > 0 && (
+            <div className="flex md:hidden justify-center gap-6 mb-6 flex-wrap">
+              {metrics.map((m) => (
+                <div key={m.section_id} className="flex flex-col items-center">
+                  <span className={m.has_star ? "text-[#ED3237] text-xl" : "text-gray-400 text-xl"}>★</span>
+                  <p className="text-xs font-bold text-center mt-1">
+                    {m.section_name}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* GRAPH — dynamic_percentage per section */}
           {metrics.length > 0 && (
             <div className="flex justify-center mb-8 md:mb-12">
               <div className="w-full max-w-[820px] relative">
-                <div className="h-32 sm:h-40 md:h-44 border-l-[1.5px] border-b-[1.5px] border-black/40 flex items-end justify-between px-[clamp(16px,3vw,80px)]">
-                  {metrics.map((m, i) => (
+                <div
+                  ref={chartRef}
+                  className="h-32 sm:h-40 md:h-44 border-l-[1.5px] border-b-[1.5px] border-black/40 flex items-end justify-between px-[clamp(16px,3vw,80px)] relative"
+                >
+                  {metrics.map((m) => (
                     <div key={m.section_id} className="flex flex-col items-center justify-end h-full z-10">
                       <div
+                        data-bar
                         className="w-4 sm:w-6 md:w-7 bg-[#A5B4FC] transition-all"
                         style={{ height: `${m.dynamic_percentage}%` }}
                       />
@@ -175,6 +219,24 @@ function NnaStudentContent() {
                       </span>
                     </div>
                   ))}
+
+                  {/* SVG connecting line */}
+                  {linePoints && (
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible" style={{ zIndex: 20 }}>
+                      <polyline
+                        points={linePoints}
+                        fill="none"
+                        stroke="#CCCCCC"
+                        strokeWidth="1.5"
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                      />
+                      {/* {linePoints.split(" ").map((pt, idx) => {
+                        const [x, y] = pt.split(",").map(Number)
+                        return <circle key={idx} cx={x} cy={y} r="4" fill="#CCCCCC" />
+                      })} */}
+                    </svg>
+                  )}
                 </div>
               </div>
             </div>
@@ -193,10 +255,10 @@ function NnaStudentContent() {
                     router.push(`/nna/${studentId}/activities?section_id=${m.section_id}&section_name=${encodeURIComponent(m.section_name)}`)
                   }
                   disabled={!permissions.can_view_activities}
-                  className="flex flex-col items-center disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex flex-col items-center disabled:opacity-40 disabled:cursor-not-allowed group transition-transform"
                 >
                   <div
-                    className={`w-full h-24 sm:h-32 md:h-40 rounded-[20px] border-[3.5px] border-black ${cardColors[index % cardColors.length]}`}
+                    className={`w-full h-24 sm:h-32 md:h-40 rounded-[20px] border-[3.5px] border-black transition-transform group-hover:scale-[1.03] group-hover:shadow-lg ${cardColors[index % cardColors.length]}`}
                   />
                   <div className="w-full h-5 sm:h-6 md:h-7 bg-black mt-2 md:mt-3 relative overflow-hidden">
                     <div

@@ -27,7 +27,7 @@ export default function SideMenu() {
   return (
     <>
       {/* Desktop: fixed right side menu */}
-      <div className="hidden md:flex fixed right-4 xl:right-8 top-[18%] flex-col gap-4 lg:gap-5 xl:gap-6 items-center z-30">
+      <div className="hidden md:flex fixed right-4 xl:right-8 top-32 lg:top-36 xl:top-40 flex-col gap-4 lg:gap-5 xl:gap-6 items-center z-30">
         <button
           onClick={() => router.push("/dashboard")}
           className="w-12 h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 rounded-full border-[3px] border-white bg-white/10 flex items-center justify-center hover:bg-white/25 transition"

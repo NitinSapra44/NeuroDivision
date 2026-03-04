@@ -1,6 +1,6 @@
 "use client"
 
-import { X } from "lucide-react"
+import { X, Home } from "lucide-react"
 import { createPortal } from "react-dom"
 import { useEffect, useState } from "react"
 import Image from "next/image"
@@ -9,6 +9,7 @@ interface ResponseModalProps {
   open: boolean
   type: "logrado" | "porLograr"
   onClose: () => void
+  onBack: () => void
   onConfirm: () => void
 }
 
@@ -16,6 +17,7 @@ export default function ResponseModal({
   open,
   type,
   onClose,
+  onBack,
   onConfirm,
 }: ResponseModalProps) {
 
@@ -27,10 +29,11 @@ export default function ResponseModal({
 
   if (!mounted || !open) return null
 
+  const portalRoot = document.getElementById("portal-root") ?? document.body
   const isSuccess = type === "logrado"
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div className="fixed inset-0 z-9999 flex items-center justify-center">
 
       {/* Dark Overlay */}
       <div
@@ -39,7 +42,7 @@ export default function ResponseModal({
       />
 
       {/* ================= MODAL CARD ================= */}
-      <div className="relative bg-[#F2F2F2] w-[92%] max-w-[480px] rounded-[28px] border-[5px] border-black shadow-2xl px-4 md:px-6 xl:px-8 2xl:px-10 py-6 md:py-8 xl:py-10 2xl:py-12 text-center">
+      <div className="relative bg-[#F2F2F2] w-[92%] max-w-120 rounded-[28px] border-[5px] border-black shadow-2xl px-4 md:px-6 xl:px-8 2xl:px-10 py-6 md:py-8 xl:py-10 2xl:py-12 text-center">
 
         {/* Close Button */}
         <button
@@ -53,11 +56,11 @@ export default function ResponseModal({
         <div className="flex justify-center mb-5 sm:mb-8">
           <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full flex items-center justify-center">
             <Image
-              src="/logo.png"   // rocket logo
+              src="/logo.png"
               alt="rocket"
               width={150}
               height={150}
-              className="object-contain w-24 h-24 sm:w-[150px] sm:h-[150px]"
+              className="object-contain w-24 h-24 sm:w-37.5 sm:h-37.5"
             />
           </div>
         </div>
@@ -68,7 +71,7 @@ export default function ResponseModal({
         </h2>
 
         <p className="text-[clamp(1rem,1.2vw,1.5rem)] text-black mb-4 md:mb-6 xl:mb-8 2xl:mb-10 font-bold">
-          Siguiente actividad
+          SIGUIENTE ACTIVIDAD
         </p>
 
         {/* Buttons */}
@@ -77,22 +80,23 @@ export default function ResponseModal({
           {/* Continue */}
           <button
             onClick={onConfirm}
-            className="w-full h-[clamp(52px,3vw,72px)] px-[clamp(16px,2vw,40px)] bg-[#ED3237] text-white text-[clamp(1rem,1.2vw,1.5rem)] font-bold rounded-full border-[4px] border-black hover:scale-[1.02] transition"
+            className="w-full h-[clamp(52px,3vw,72px)] px-[clamp(16px,2vw,40px)] bg-[#ED3237] text-white text-[clamp(1rem,1.2vw,1.5rem)] font-bold rounded-full border-4 border-black hover:scale-[1.02] transition"
           >
             Continuar
           </button>
 
           {/* Back */}
           <button
-            onClick={onClose}
-            className="w-full h-[clamp(52px,3vw,72px)] px-[clamp(16px,2vw,40px)] bg-black text-white text-[clamp(1rem,1.2vw,1.5rem)] font-bold rounded-full border-[4px] border-white hover:scale-[1.02] transition"
+            onClick={onBack}
+            className="w-full h-[clamp(52px,3vw,72px)] px-[clamp(16px,2vw,40px)] bg-black text-white text-[clamp(1rem,1.2vw,1.5rem)] font-bold rounded-full border-4 border-white hover:scale-[1.02] transition flex items-center justify-center gap-3"
           >
             Volver
+            <Home className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
 
         </div>
       </div>
     </div>,
-    document.body
+    portalRoot
   )
 }

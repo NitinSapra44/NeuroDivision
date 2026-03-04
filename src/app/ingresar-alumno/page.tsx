@@ -66,7 +66,7 @@ function IngresarAlumnoContent() {
     <section className="relative w-full h-screen overflow-hidden font-montserrat text-white">
 
       {/* ================= BACKGROUND ================= */}
-      <div className="fixed inset-0 -z-10">
+      <div className="fixed inset-0 -z-10" style={{ transform: "translate3d(0,0,0)" }}>
         <Image
           src="/hero.png"
           alt="Background"
@@ -124,13 +124,14 @@ function IngresarAlumnoContent() {
             <div>
               <label className="block text-center text-lg md:text-xl xl:text-2xl font-bold mb-1.5">Fecha de nacimiento</label>
               <div className="relative">
-                <Calendar className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5 md:w-6 md:h-6 pointer-events-none" />
+                <Calendar className="hidden md:block absolute left-6 top-1/2 -translate-y-1/2 text-gray-500 w-6 h-6 pointer-events-none" />
                 <input
                   type="date"
                   value={birthdate}
                   onChange={(e) => setBirthdate(e.target.value)}
+                  max={new Date().toISOString().split("T")[0]}
                   disabled={loading}
-                  className="w-full bg-white text-black rounded-full border-[3px] border-black pl-14 pr-6 py-4 md:py-5 text-base md:text-lg focus:outline-none disabled:opacity-60"
+                  className="w-full bg-white text-black rounded-full border-[3px] border-black px-6 md:pl-14 md:pr-6 py-4 md:py-5 text-base md:text-lg focus:outline-none disabled:opacity-60"
                 />
               </div>
             </div>

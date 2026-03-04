@@ -16,14 +16,15 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en">
-            <body className="overflow-x-hidden">
+        <html lang="en" suppressHydrationWarning>
+            <body className="overflow-x-hidden" suppressHydrationWarning>
                 <div className="flex min-h-screen flex-col">
                     <Navbar />
                     <main className="flex-1 flex flex-col">
                         {children}
                     </main>
                 </div>
+                <div id="portal-root" />
             </body>
         </html>
     );

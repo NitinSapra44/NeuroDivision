@@ -101,7 +101,9 @@ function AssessmentContent() {
       })
       if (rpcError) throw rpcError
 
-      router.push(data?.redirect_url || "/dashboard")
+      const redirectUrl = data?.redirect_url || "/dashboard"
+      router.push(redirectUrl)
+      window.scrollTo({ top: 0, behavior: "smooth" })
     } catch (err: any) {
       console.error(err)
       setError("Error al guardar. Intente nuevamente.")
@@ -114,7 +116,7 @@ function AssessmentContent() {
     <section className="relative w-full min-h-[calc(100vh-130px)] font-montserrat text-white">
 
       {/* ================= BACKGROUND ================= */}
-      <div className="fixed inset-0 -z-10">
+      <div className="fixed inset-0 -z-10" style={{ transform: "translate3d(0,0,0)" }}>
         <Image src="/hero.png" alt="Background" fill priority quality={100} className="object-cover object-center" />
         <div className="absolute inset-0 bg-red-600/55 backdrop-brightness-95" />
       </div>
@@ -183,7 +185,7 @@ function AssessmentContent() {
               onClick={() => handleToggle(item.item_id)}
             >
               <div
-                className={`w-7 h-7 md:w-8 md:h-8 flex-shrink-0 border-2 border-black flex items-center justify-center transition ${
+                className={`w-7 h-7 md:w-8 md:h-8 shrink-0 border-2 border-black flex items-center justify-center transition ${
                   checkedItems[item.item_id] ? "bg-black" : "bg-white"
                 }`}
               >

@@ -113,7 +113,7 @@ function ActivitiesContent() {
                 <Home className="w-8 h-8 md:w-12 md:h-12 text-[#ED3237]" />
               </button>
             </div>
-            <h1 className="text-[clamp(24px,2.5vw,48px)] font-bold text-black">
+            <h1 className="text-[clamp(18px,2.5vw,48px)] font-bold text-black text-center px-12">
               Actividades: {sectionName}
             </h1>
           </div>
@@ -122,20 +122,19 @@ function ActivitiesContent() {
             <p className="text-center text-gray-500 text-lg mt-10">No hay actividades en esta sección.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-[clamp(16px,2vw,48px)] justify-items-center">
-              {activities.map((item, index) => {
+              {activities.map((item) => {
+                // spec: true -> green + "L" | false/null -> red + "PL"
                 const isDone = item.is_success === true
-                const isFailed = item.is_success === false
-                const isNew = item.is_success === null
 
                 return (
                   <button
                     key={item.activity_id}
                     onClick={() => router.push(`/nna/${studentId}/activity/${item.activity_id}?section_id=${sectionId}&section_name=${encodeURIComponent(sectionName)}`)}
-                    className="flex flex-col items-center w-full"
+                    className="flex flex-col items-center w-full group"
                   >
                     <div
-                      className={`w-full max-w-[288px] h-32 sm:h-36 md:h-40 rounded-[6px] border-[3px] border-black flex items-center justify-center ${
-                        isDone ? "bg-[#7BC043]" : isFailed ? "bg-[#F02E2E]" : "bg-[#848688]"
+                      className={`w-full max-w-[288px] h-32 sm:h-36 md:h-40 rounded-[6px] border-[3px] border-black flex items-center justify-center transition-transform duration-200 group-hover:scale-[1.03] group-hover:shadow-lg ${
+                        isDone ? "bg-[#7BC043]" : "bg-[#F02E2E]"
                       }`}
                     >
                       <Image
@@ -147,7 +146,7 @@ function ActivitiesContent() {
                       />
                     </div>
                     <p className="text-[clamp(20px,1.8vw,36px)] mt-2 font-light">
-                      {isDone ? "L" : isFailed ? "PL" : `A${index + 1}`}
+                      {isDone ? "L" : "PL"}
                     </p>
                   </button>
                 )

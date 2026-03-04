@@ -56,7 +56,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         }
 
         checkAuth()
-    }, [router, permissions, setPermissions, setIsLoading]) // Removed supabase from dependency as it's singleton
+    }, [router, setPermissions, setIsLoading])
 
     if (isLoading) {
         return (
