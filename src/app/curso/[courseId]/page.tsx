@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
-import { ArrowLeft, Building2, Download, Upload, Plus, CheckCircle, X } from "lucide-react"
+import { ArrowLeft, Building2, Download, Upload, Plus, CheckCircle, X, User, Calendar, ChevronDown, Mail } from "lucide-react"
 import * as XLSX from "xlsx"
 import { supabase } from "@/lib/supabase/client"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
@@ -35,7 +35,7 @@ interface XlsxStudent {
   last_name: string
   sex: string
   birthdate: string
-  email: string
+  parent_email: string
 }
 
 export default function CourseDashboardPage() {
@@ -193,7 +193,7 @@ function CourseDashboardContent() {
           last_name: String(row[1] ?? "").trim(),
           sex,
           birthdate,
-          email: String(row[4] ?? "").trim(),
+          parent_email: String(row[4] ?? "").trim(),
         }
       }).filter((s) => s.first_name || s.last_name)
 
@@ -296,7 +296,7 @@ function CourseDashboardContent() {
       </div>
 
       {/* ================= CONTENT ================= */}
-      <div className="relative z-10 flex-1 flex flex-col w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-10 pt-8 md:pt-12 pb-20 md:pb-16">
+      <div className="relative z-10 flex-1 flex flex-col w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-10 pr-4 md:pr-24 xl:pr-28 pt-8 md:pt-12 pb-20 md:pb-16">
 
         {/* ====== TOP BAR ====== */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-8">
@@ -520,125 +520,133 @@ function CourseDashboardContent() {
 
       {/* ================= ADD STUDENT MODAL ================= */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 overflow-y-auto">
-          <div className="relative w-full max-w-screen-2xl mx-auto">
-            <div className="relative min-h-screen flex items-center justify-center py-8">
-              <div
-                className="relative w-full rounded-3xl overflow-hidden shadow-2xl"
-                style={{ maxWidth: "480px" }}
+        <div className="fixed inset-0 z-50 flex items-center justify-center font-montserrat">
+
+          {/* Backdrop — hero + red overlay */}
+          <Image src="/hero.png" alt="" fill quality={100} className="object-cover object-center" />
+          <div className="absolute inset-0 bg-red-600/50" />
+          <div className="absolute inset-0" onClick={() => setShowAddModal(false)} />
+
+          {/* Modal card — 60% wide with #F1F1F2 bg */}
+          <div className="relative z-10 w-[60%] min-w-105 max-w-3xl rounded-3xl overflow-hidden shadow-2xl" style={{ backgroundColor: "#F1F1F2F2" }}>
+
+            {/* Content */}
+            <div className="relative z-10 px-10 py-10">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="absolute top-4 right-4 text-black/50 hover:text-black"
               >
-                {/* Background */}
-                <div className="absolute inset-0">
-                  <Image src="/hero.png" alt="Background" fill quality={100} className="object-cover object-center" />
-                  <div className="absolute inset-0 bg-red-600/55" />
-                </div>
+                <X className="w-5 h-5" />
+              </button>
 
-                {/* Modal content */}
-                <div className="relative z-10 px-8 py-8">
-                  <button
-                    onClick={() => setShowAddModal(false)}
-                    className="absolute top-4 right-4 text-white/70 hover:text-white"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+              <h2 className="text-black font-black text-2xl text-center mb-8 tracking-wide">
+                INGRESAR ALUMNO
+              </h2>
 
-                  <h2 className="text-white font-black text-2xl text-center mb-1">INGRESAR ALUMNO</h2>
-                  <p className="text-white font-bold text-center mb-6">Información Personal</p>
+              <form onSubmit={handleAddStudent} className="space-y-4">
 
-                  <form onSubmit={handleAddStudent} className="space-y-4">
-
-                    {/* Nombre */}
-                    <div>
-                      <label className="block text-white font-bold text-center mb-1.5">Nombre</label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Ingrese nombre del alumno"
-                          value={addForm.firstName}
-                          onChange={(e) => setAddForm((f) => ({ ...f, firstName: e.target.value }))}
-                          disabled={addLoading}
-                          className="w-full bg-white text-black rounded-full border-[3px] border-black px-8 py-3 text-base placeholder:text-gray-400 focus:outline-none disabled:opacity-60"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Apellido */}
-                    <div>
-                      <label className="block text-white font-bold text-center mb-1.5">Apellido</label>
-                      <input
-                        type="text"
-                        placeholder="Ingrese apellidos del alumno"
-                        value={addForm.lastName}
-                        onChange={(e) => setAddForm((f) => ({ ...f, lastName: e.target.value }))}
-                        disabled={addLoading}
-                        className="w-full bg-white text-black rounded-full border-[3px] border-black px-8 py-3 text-base placeholder:text-gray-400 focus:outline-none disabled:opacity-60"
-                      />
-                    </div>
-
-                    {/* Fecha + Sexo */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-white font-bold text-center mb-1.5">Fecha de nacimiento</label>
-                        <input
-                          type="date"
-                          value={addForm.birthdate}
-                          onChange={(e) => setAddForm((f) => ({ ...f, birthdate: e.target.value }))}
-                          max={new Date().toISOString().split("T")[0]}
-                          disabled={addLoading}
-                          className="w-full bg-white text-black rounded-full border-[3px] border-black px-4 py-3 text-sm focus:outline-none disabled:opacity-60 appearance-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-white font-bold text-center mb-1.5">Sexo</label>
-                        <div className="relative">
-                          <select
-                            value={addForm.sex}
-                            onChange={(e) => setAddForm((f) => ({ ...f, sex: e.target.value }))}
-                            disabled={addLoading}
-                            className="w-full bg-white text-black rounded-full border-[3px] border-black px-4 py-3 text-sm focus:outline-none disabled:opacity-60 appearance-none"
-                          >
-                            <option value="">Seleccione sexo</option>
-                            <option value="MASCULINO">Masculino</option>
-                            <option value="FEMENINO">Femenino</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Correo apoderado (opcional) */}
-                    <div>
-                      <label className="block text-white font-bold text-center mb-1.5">
-                        Correo de apoderado <span className="font-normal opacity-70">(Opcional)</span>
-                      </label>
-                      <input
-                        type="email"
-                        placeholder="Ingrese correo del apoderado"
-                        value={addForm.parentEmail}
-                        onChange={(e) => setAddForm((f) => ({ ...f, parentEmail: e.target.value }))}
-                        disabled={addLoading}
-                        className="w-full bg-white text-black rounded-full border-[3px] border-black px-8 py-3 text-base placeholder:text-gray-400 focus:outline-none disabled:opacity-60"
-                      />
-                    </div>
-
-                    {/* Error */}
-                    {addError && (
-                      <div className="bg-black/30 border border-white/30 rounded-xl px-4 py-3 text-white font-semibold text-sm text-center">
-                        {addError}
-                      </div>
-                    )}
-
-                    {/* Submit */}
-                    <button
-                      type="submit"
+                {/* Nombre */}
+                <div>
+                  <label className="block text-black font-bold text-center mb-1.5">Nombre</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Ingrese nombre del alumno"
+                      value={addForm.firstName}
+                      onChange={(e) => setAddForm((f) => ({ ...f, firstName: e.target.value }))}
                       disabled={addLoading}
-                      className="w-full bg-black text-white rounded-full border-4 border-white py-3 text-lg font-bold hover:bg-zinc-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {addLoading ? "Registrando..." : "Confirmar"}
-                    </button>
-
-                  </form>
+                      className="w-full bg-white text-black rounded-full px-4 py-3 pl-11 text-base placeholder:text-gray-400 focus:outline-none disabled:opacity-60"
+                    />
+                  </div>
                 </div>
-              </div>
+
+                {/* Apellido */}
+                <div>
+                  <label className="block text-black font-bold text-center mb-1.5">Apellido</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Ingrese apellidos del alumno"
+                      value={addForm.lastName}
+                      onChange={(e) => setAddForm((f) => ({ ...f, lastName: e.target.value }))}
+                      disabled={addLoading}
+                      className="w-full bg-white text-black rounded-full px-4 py-3 pl-11 text-base placeholder:text-gray-400 focus:outline-none disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+
+                {/* Fecha + Sexo */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-black font-bold text-center mb-1.5">Fecha de nacimiento</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                      <input
+                        type="date"
+                        value={addForm.birthdate}
+                        onChange={(e) => setAddForm((f) => ({ ...f, birthdate: e.target.value }))}
+                        max={new Date().toISOString().split("T")[0]}
+                        disabled={addLoading}
+                        className="w-full bg-white text-black rounded-full px-4 py-3 pl-11 text-sm focus:outline-none disabled:opacity-60 appearance-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-black font-bold text-center mb-1.5">Sexo</label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                      <select
+                        value={addForm.sex}
+                        onChange={(e) => setAddForm((f) => ({ ...f, sex: e.target.value }))}
+                        disabled={addLoading}
+                        className="w-full bg-white text-black rounded-full px-4 py-3 pl-11 pr-8 text-sm focus:outline-none disabled:opacity-60 appearance-none"
+                      >
+                        <option value="">Seleccione sexo</option>
+                        <option value="MASCULINO">Masculino</option>
+                        <option value="FEMENINO">Femenino</option>
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Correo apoderado */}
+                <div>
+                  <label className="block text-black font-bold text-center mb-1.5">
+                    Correo apoderado <span className="font-normal text-black/60">(Opcional)</span>
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                    <input
+                      type="email"
+                      placeholder="Ingrese correo del apoderado"
+                      value={addForm.parentEmail}
+                      onChange={(e) => setAddForm((f) => ({ ...f, parentEmail: e.target.value }))}
+                      disabled={addLoading}
+                      className="w-full bg-white text-black rounded-full px-4 py-3 pl-11 text-base placeholder:text-gray-400 focus:outline-none disabled:opacity-60"
+                    />
+                  </div>
+                </div>
+
+                {/* Error */}
+                {addError && (
+                  <div className="bg-red-100 border border-red-300 rounded-xl px-4 py-3 text-red-700 font-semibold text-sm text-center">
+                    {addError}
+                  </div>
+                )}
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={addLoading}
+                  className="w-full bg-black text-white rounded-full py-3 text-lg font-bold hover:bg-zinc-900 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                >
+                  {addLoading ? "Registrando..." : "Confirmar"}
+                </button>
+
+              </form>
             </div>
           </div>
         </div>

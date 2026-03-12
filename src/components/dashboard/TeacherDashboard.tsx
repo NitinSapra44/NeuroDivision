@@ -68,7 +68,7 @@ console.log(data)
 
       {/* ================= CONTENT ================= */}
       <div className="relative z-10 flex-1 flex flex-col">
-        <div className="flex flex-col items-center pt-10 md:pt-16 xl:pt-20 w-full max-w-screen-2xl mx-auto px-6 md:px-8 xl:px-10 pb-10 md:pb-16">
+        <div className="flex flex-col items-center pt-10 md:pt-16 xl:pt-20 w-full max-w-screen-2xl mx-auto px-6 md:px-8 xl:px-10 pr-6 md:pr-24 xl:pr-28 pb-10 md:pb-16">
 
           {/* ====== HEADER: INSTITUTION + TEACHER ====== */}
           <div className="w-full xl:max-w-6xl 2xl:max-w-[1280px] flex flex-col sm:flex-row items-center justify-between gap-4 mb-10 md:mb-12">
