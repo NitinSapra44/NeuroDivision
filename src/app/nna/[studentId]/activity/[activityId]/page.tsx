@@ -6,6 +6,7 @@ import { Home, Bell, User, LogOut, CornerUpLeft, ArrowRight } from "lucide-react
 import { supabase } from "@/lib/supabase/client"
 import { useAppContext } from "@/store/app-context"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
+import PageLoader from "@/components/ui/PageLoader"
 import ResponseModal from "@/components/ui/ResponseModal"
 import YouTubeEmbed, { VideoPlaceholder } from "@/components/ui/YouTubeEmbed"
 
@@ -160,13 +161,7 @@ function ActivityContent() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-white">
-        <div className="w-10 h-10 border-4 border-[#ED3237]/30 border-t-[#ED3237] rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (loading) return <PageLoader />
 
   if (error && !activity) {
     return (
@@ -193,7 +188,7 @@ function ActivityContent() {
       <div className="flex w-full h-full flex-col md:flex-row">
 
         {/* ================= LEFT SIDEBAR — desktop ================= */}
-        <div className="hidden md:flex w-[clamp(200px,16vw,280px)] flex-col items-center pt-6 border-r border-gray-100 shrink-0">
+        <div className="hidden lg:flex w-[clamp(160px,13vw,220px)] flex-col items-center pt-6 border-r border-gray-100 shrink-0">
           <div className="w-20 h-20 lg:w-28 lg:h-28 rounded-full bg-[#ED3237] flex items-center justify-center shadow-sm">
             <User className="w-10 h-10 lg:w-14 lg:h-14 text-white" />
           </div>
@@ -218,7 +213,7 @@ function ActivityContent() {
         <div className="flex-1 h-full w-full px-[clamp(16px,3vw,60px)] pt-6 md:pt-12 pb-24 md:pb-8 overflow-auto overflow-x-hidden">
 
           {/* Desktop header */}
-          <div className="hidden md:flex relative items-center justify-center mb-10">
+          <div className="hidden lg:flex relative items-center justify-center mb-10">
             <div className="absolute left-0 flex items-center gap-6">
               <button onClick={() => router.push(`/nna/${studentId}`)} className="hover:scale-110 transition-transform">
                 <Home className="w-8 h-8 md:w-10 md:h-10 text-[#000000]" />
@@ -232,8 +227,8 @@ function ActivityContent() {
             </h1>
           </div>
 
-          {/* Mobile: nav + student name + stars */}
-          <div className="flex md:hidden items-center justify-between mb-4">
+          {/* Mobile/tablet: nav + student name + stars */}
+          <div className="flex lg:hidden items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <button onClick={() => router.push(`/nna/${studentId}`)} className="hover:scale-110 transition-transform">
                 <Home className="w-7 h-7 text-black" />
@@ -246,7 +241,7 @@ function ActivityContent() {
             <div className="w-14" />
           </div>
           {metrics.length > 0 && (
-            <div className="flex md:hidden justify-center gap-4 flex-wrap mb-4">
+            <div className="flex lg:hidden justify-center gap-4 flex-wrap mb-4">
               {metrics.map((m) => (
                 <div key={m.section_id} className="flex flex-col items-center">
                   <span className={m.has_star ? "text-[#ED3237] text-xl" : "text-gray-400 text-xl"}>★</span>
@@ -256,11 +251,11 @@ function ActivityContent() {
             </div>
           )}
 
-          {/* VIDEO + TEXT — video smaller on desktop, text gets remaining space */}
-          <div className="flex flex-col md:flex-row gap-[clamp(16px,2vw,40px)] items-stretch">
+          {/* VIDEO + TEXT — video above on tablet portrait, side-by-side on desktop */}
+          <div className="flex flex-col lg:flex-row gap-[clamp(16px,2vw,40px)] items-stretch">
 
             {/* VIDEO BOX */}
-            <div className="w-full md:w-[38%] lg:w-[50%] h-56 md:h-72 lg:h-80 bg-[#ED3237] rounded-2xl border-[3px] border-black flex items-center justify-center overflow-hidden shrink-0">
+            <div className="w-full lg:w-[48%] h-56 md:h-72 lg:h-80 bg-[#ED3237] rounded-2xl border-[3px] border-black flex items-center justify-center overflow-hidden shrink-0">
               {activity?.video_url ? (
                 <YouTubeEmbed url={activity.video_url} />
               ) : (
@@ -351,10 +346,14 @@ function ActivityContent() {
         </div>
 
         {/* ================= RIGHT ICONS — desktop ================= */}
-        <div className="hidden md:flex w-[clamp(70px,6vw,100px)] flex-col items-center pt-16 space-y-16 shrink-0">
-          <div className="hover:scale-110 transition-transform"><Bell className="w-12 h-12 text-black" /></div>
-          <div className="hover:scale-110 transition-transform"><User className="w-12 h-12 text-black" /></div>
-          <button onClick={handleLogout} disabled={loggingOut} className="hover:scale-110 transition-transform disabled:hover:scale-100">
+        <div className="hidden lg:flex flex-col gap-8 items-center pt-16 px-4 shrink-0">
+          <button className="opacity-40 cursor-not-allowed" title="Notificaciones (próximamente)" disabled>
+            <Bell className="w-12 h-12 text-black" />
+          </button>
+          <button className="opacity-40 cursor-not-allowed" title="Opciones de usuario (próximamente)" disabled>
+            <User className="w-12 h-12 text-black" />
+          </button>
+          <button onClick={handleLogout} disabled={loggingOut} className="hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" title="Cerrar sesión">
             <LogOut className="w-12 h-12 text-black" />
           </button>
         </div>
@@ -362,7 +361,7 @@ function ActivityContent() {
       </div>
 
       {/* ================= MOBILE BOTTOM NAV ================= */}
-      <div className="fixed bottom-0 left-0 w-full h-16 md:hidden bg-white border-t flex justify-around items-center z-20">
+      <div className="fixed bottom-0 left-0 w-full h-16 lg:hidden bg-white border-t flex justify-around items-center z-20">
         <Bell className="w-6 h-6 text-black" />
         <User className="w-6 h-6 text-black" />
         <button onClick={handleLogout} disabled={loggingOut} className="hover:scale-110 transition-transform disabled:hover:scale-100">

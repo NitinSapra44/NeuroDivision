@@ -6,6 +6,7 @@ import { Home, Bell, User, LogOut, Building2 } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { useAppContext } from "@/store/app-context"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
+import PageLoader from "@/components/ui/PageLoader"
 
 // Matches what view_nna_dynamic_progress returns via get_nna_dashboard_overview
 interface ProgressMetric {
@@ -105,7 +106,7 @@ function NnaStudentContent() {
     const calculate = () => {
       if (!chartRef.current || metrics.length < 2) return
       const container = chartRef.current
-      const { height } = container.getBoundingClientRect()
+      container.getBoundingClientRect()
       const bars = container.querySelectorAll<HTMLElement>("[data-bar]")
       if (bars.length === 0) return
       const containerRect = container.getBoundingClientRect()
@@ -122,13 +123,7 @@ function NnaStudentContent() {
     return () => window.removeEventListener("resize", calculate)
   }, [metrics])
 
-  if (loading || redirecting) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-white">
-        <div className="w-10 h-10 border-4 border-[#ED3237]/30 border-t-[#ED3237] rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (loading || redirecting) return <PageLoader />
 
   if (error || !data) {
     return (
@@ -151,7 +146,7 @@ function NnaStudentContent() {
   // Colour palette for domain cards (cycles if more than 5 sections)
   const cardColors = [
     "bg-[#9B69C2]", "bg-[#BCA9CE]", "bg-[#A366FF]",
-    "bg-[#5C66FF]", "bg-[#ED3237]",
+    "bg-[#5C66FF]", "bg-[#0000FF]",
   ]
 
   return (
@@ -159,7 +154,7 @@ function NnaStudentContent() {
       <div className="flex w-full h-full flex-col md:flex-row">
 
         {/* ================= LEFT SIDEBAR ================= */}
-        <div className="hidden md:flex w-[clamp(240px,18vw,300px)] flex-col items-center pt-6 border-r border-gray-100">
+        <div className="hidden md:flex w-[clamp(160px,14vw,220px)] flex-col items-center pt-6 border-r border-gray-100">
 
           {/* Institution name badge */}
           {student.institution_name && (
@@ -295,14 +290,18 @@ function NnaStudentContent() {
         </div>
 
         {/* ================= RIGHT ICONS — desktop only ================= */}
-        <div className="hidden md:flex w-[clamp(70px,6vw,100px)] flex-col items-center pt-12 space-y-12">
-          <button onClick={() => router.push("/dashboard")} className="hover:scale-110 transition-transform">
-            <Home className="w-12 h-12 text-black stroke-[1.5]" />
+        <div className="hidden md:flex flex-col gap-8 items-center pt-16 px-4 shrink-0">
+          <button onClick={() => router.push("/dashboard")} className="hover:scale-110 active:scale-95 transition-all duration-200" title="Inicio">
+            <Home className="w-12 h-12 text-black" />
           </button>
-          <div className="hover:scale-110 transition-transform"><Bell className="w-12 h-12 text-black stroke-[1.5]" /></div>
-          <div className="hover:scale-110 transition-transform"><User className="w-12 h-12 text-black stroke-[1.5]" /></div>
-          <button onClick={handleLogout} disabled={loggingOut} className="hover:scale-110 transition-transform disabled:hover:scale-100">
-            <LogOut className="w-12 h-12 text-black stroke-[1.5]" />
+          <button className="opacity-40 cursor-not-allowed" title="Notificaciones (próximamente)" disabled>
+            <Bell className="w-12 h-12 text-black" />
+          </button>
+          <button className="opacity-40 cursor-not-allowed" title="Opciones de usuario (próximamente)" disabled>
+            <User className="w-12 h-12 text-black" />
+          </button>
+          <button onClick={handleLogout} disabled={loggingOut} className="hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" title="Cerrar sesión">
+            <LogOut className="w-12 h-12 text-black" />
           </button>
         </div>
 

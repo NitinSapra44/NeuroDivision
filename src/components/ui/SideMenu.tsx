@@ -26,40 +26,40 @@ export default function SideMenu() {
 
   return (
     <>
-      {/* Desktop: fixed right side menu */}
-      <div className="hidden md:flex fixed right-4 xl:right-8 top-32 lg:top-36 xl:top-40 flex-col gap-4 lg:gap-5 xl:gap-6 items-center z-30">
+      {/* Desktop: static right side menu — bare icons, white, no circles */}
+      <div className="hidden md:flex flex-col gap-8 items-center pt-16 px-4 xl:px-6 shrink-0 z-30">
         <button
           onClick={() => router.push("/dashboard")}
-          className="w-12 h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 rounded-full border-[3px] border-white bg-white/10 flex items-center justify-center hover:bg-white/30 hover:scale-110 active:scale-95 transition-all duration-200"
+          className="hover:scale-110 active:scale-95 transition-all duration-200"
           title="Inicio"
         >
-          <Home className="w-5 h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 text-white" />
+          <Home className="w-12 h-12 text-white" />
         </button>
         <button
-          className="w-12 h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 rounded-full border-[3px] border-white/30 bg-white/5 flex items-center justify-center opacity-40 cursor-not-allowed"
+          className="opacity-40 cursor-not-allowed"
           title="Notificaciones (próximamente)"
           disabled
         >
-          <Bell className="w-5 h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 text-white" />
+          <Bell className="w-12 h-12 text-white" />
         </button>
         <button
-          className="w-12 h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 rounded-full border-[3px] border-white/30 bg-white/5 flex items-center justify-center opacity-40 cursor-not-allowed"
+          className="opacity-40 cursor-not-allowed"
           title="Opciones de usuario (próximamente)"
           disabled
         >
-          <User className="w-5 h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 text-white" />
+          <User className="w-12 h-12 text-white" />
         </button>
         <button
           onClick={handleLogout}
           disabled={loggingOut}
-          className="w-12 h-12 lg:w-14 lg:h-14 xl:w-16 xl:h-16 rounded-full border-[3px] border-white bg-white/10 flex items-center justify-center hover:bg-white/30 hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           title="Cerrar sesión"
         >
-          <LogOut className="w-5 h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 text-white" />
+          <LogOut className="w-12 h-12 text-white" />
         </button>
       </div>
 
-      {/* Mobile: fixed bottom bar */}
+      {/* Mobile: bottom bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-sm border-t border-white/20 flex justify-around items-center py-3 z-30">
         <button
           onClick={() => router.push("/dashboard")}

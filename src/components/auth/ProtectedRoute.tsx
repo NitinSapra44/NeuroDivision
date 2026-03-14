@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
 import { useAppContext } from "@/store/app-context"
-import { Loader2 } from "lucide-react"
+import PageLoader from "@/components/ui/PageLoader"
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const router = useRouter()
@@ -59,11 +59,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     }, [router, setPermissions, setIsLoading])
 
     if (isLoading) {
-        return (
-            <div className="h-full flex items-center justify-center bg-black text-white">
-                <Loader2 className="w-10 h-10 animate-spin text-[#ED3237]" />
-            </div>
-        )
+        return <PageLoader dark />
     }
 
     // Double check permissions exist to be safe

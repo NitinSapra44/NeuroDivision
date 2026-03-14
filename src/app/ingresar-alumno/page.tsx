@@ -79,6 +79,9 @@ function IngresarAlumnoContent() {
         <div className="absolute inset-0 bg-red-600/55 backdrop-brightness-95" />
       </div>
 
+      <div className="relative z-10 flex w-full">
+      <div className="flex-1">
+
       {/* ================= CONTENT ================= */}
       <div className="relative flex flex-col items-center pt-4 md:pt-6 px-6 pb-6 md:pb-8 max-w-5xl mx-auto">
 
@@ -176,8 +179,12 @@ function IngresarAlumnoContent() {
         </form>
       </div>
 
+      </div>
+
       {/* ================= SIDE MENU ================= */}
       <SideMenu />
+
+      </div>
 
     </section>
   )

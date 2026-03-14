@@ -8,6 +8,7 @@ import * as XLSX from "xlsx"
 import { supabase } from "@/lib/supabase/client"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
 import SideMenu from "@/components/ui/SideMenu"
+import PageLoader from "@/components/ui/PageLoader"
 
 interface AssessmentInfo {
   instance_id: number
@@ -27,6 +28,7 @@ interface CourseDashboardData {
   student_limit: number
   total_students: number
   is_plan_active: boolean
+  can_add_student: boolean
   students: Student[]
 }
 
@@ -205,23 +207,44 @@ function CourseDashboardContent() {
     e.target.value = ""
   }
 
-  // ===== EXPORT STUDENTS TO XLSX =====
-  const handleExportXlsx = () => {
+  // ===== EXPORT STUDENTS =====
+  const handleDownloadStudents = async () => {
     if (!data) return
-    const rows = [
-      ["Nombre completo", "Estado evaluación"],
-      ...data.students.map((s) => [
-        s.full_name,
-        s.assessment_info?.status === "COMPLETED" ? "Completado"
-          : s.assessment_info ? "Pendiente"
-          : "Sin evaluación",
-      ]),
+    const studentIds = data.students.map((s) => s.id)
+
+    const [{ data: nnaUsers }, { data: invitations }] = await Promise.all([
+      supabase
+        .from("nna_user")
+        .select("id, first_name, last_name, sex, birthdate")
+        .in("id", studentIds),
+      supabase
+        .from("nna_invitation")
+        .select("nna_user_id, email")
+        .in("nna_user_id", studentIds),
+    ])
+
+    const nnaMap = new Map((nnaUsers ?? []).map((u) => [u.id, u]))
+    const invMap = new Map((invitations ?? []).map((i) => [i.nna_user_id, i.email]))
+
+    const rows: string[][] = [
+      ["Nombre", "Apellido", "Sexo", "Fecha de nacimiento", "Correo apoderado (opcional)"],
+      ...data.students.map((s) => {
+        const u = nnaMap.get(s.id)
+        return [
+          u?.first_name ?? s.full_name,
+          u?.last_name ?? "",
+          u?.sex ?? "",
+          u?.birthdate ?? "",
+          invMap.get(s.id) ?? "",
+        ]
+      }),
     ]
+
     const ws = XLSX.utils.aoa_to_sheet(rows)
-    ws["!cols"] = [{ wch: 30 }, { wch: 20 }]
+    ws["!cols"] = [{ wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 22 }, { wch: 32 }]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, "Alumnos")
-    XLSX.writeFile(wb, `${data.course_name}.xlsx`)
+    XLSX.writeFile(wb, `alumnos_${data.course_name.replace(/\s+/g, "_")}.xlsx`)
   }
 
   // ===== BULK IMPORT =====
@@ -255,13 +278,7 @@ function CourseDashboardContent() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-black">
-        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (loading) return <PageLoader dark />
 
   if (error || !data) {
     return (
@@ -296,7 +313,8 @@ function CourseDashboardContent() {
       </div>
 
       {/* ================= CONTENT ================= */}
-      <div className="relative z-10 flex-1 flex flex-col w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-10 pr-4 md:pr-24 xl:pr-28 pt-8 md:pt-12 pb-20 md:pb-16">
+      <div className="relative z-10 flex-1 flex flex-row w-full">
+      <div className="flex-1 flex flex-col w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-10 pt-8 md:pt-12 pb-20 md:pb-16">
 
         {/* ====== TOP BAR ====== */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-8">
@@ -316,9 +334,9 @@ function CourseDashboardContent() {
         {/* ====== ACTION BUTTONS ====== */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
 
-          {/* Export student list */}
+          {/* Download student list */}
           <button
-            onClick={handleExportXlsx}
+            onClick={handleDownloadStudents}
             className="flex items-center gap-2 bg-black/50 border border-white/30 rounded-xl px-4 py-2.5 text-white text-xs md:text-sm font-semibold hover:bg-black/70 transition"
           >
             <Download className="w-4 h-4" />
@@ -331,7 +349,7 @@ function CourseDashboardContent() {
               if (!data.is_plan_active) return
               fileInputRef.current?.click()
             }}
-            disabled={!data.is_plan_active}
+            disabled={!data.is_plan_active || !data.can_add_student}
             className="flex items-center gap-2 bg-[#ED3237] rounded-xl px-4 py-2.5 text-white text-xs md:text-sm font-bold hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Upload className="w-4 h-4" />
@@ -348,12 +366,12 @@ function CourseDashboardContent() {
           {/* Add student manually */}
           <button
             onClick={() => {
-              if (!data.is_plan_active) return
+              if (!data.is_plan_active || !data.can_add_student) return
               setAddError(null)
               setAddForm({ firstName: "", lastName: "", birthdate: "", sex: "", parentEmail: "" })
               setShowAddModal(true)
             }}
-            disabled={!data.is_plan_active}
+            disabled={!data.is_plan_active || !data.can_add_student}
             className="flex items-center gap-2 bg-[#ED3237] rounded-xl px-4 py-2.5 text-white text-xs md:text-sm font-bold hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4" />
@@ -380,13 +398,19 @@ function CourseDashboardContent() {
 
         {/* Upload result/error */}
         {uploadResult && (
-          <div className="mb-4 bg-green-700/80 border border-white/20 rounded-xl px-4 py-3 text-white text-sm font-semibold">
-            {uploadResult}
+          <div className="mb-4 flex items-center justify-between gap-4 bg-green-700/80 border border-white/20 rounded-xl px-4 py-3 text-white text-sm font-semibold">
+            <span>{uploadResult}</span>
+            <button onClick={() => setUploadResult(null)} className="shrink-0 hover:opacity-70 transition">
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
         {uploadError && (
-          <div className="mb-4 bg-black/60 border border-red-400/50 rounded-xl px-4 py-3 text-red-300 text-sm font-semibold">
-            {uploadError}
+          <div className="mb-4 flex items-center justify-between gap-4 bg-black/60 border border-red-400/50 rounded-xl px-4 py-3 text-red-300 text-sm font-semibold">
+            <span>{uploadError}</span>
+            <button onClick={() => setUploadError(null)} className="shrink-0 hover:opacity-70 transition">
+              <X className="w-4 h-4" />
+            </button>
           </div>
         )}
 
@@ -453,10 +477,10 @@ function CourseDashboardContent() {
                           </a>
                           <button
                             onClick={() => {
-                              if (!data.is_plan_active) return
+                              if (!data.is_plan_active || !data.can_add_student) return
                               setUnlinkStudent(student)
                             }}
-                            disabled={!data.is_plan_active}
+                            disabled={!data.is_plan_active || !data.can_add_student}
                             className="text-red-300 underline underline-offset-2 font-semibold hover:text-red-200 transition text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline"
                           >
                             Desvincular
@@ -475,6 +499,7 @@ function CourseDashboardContent() {
 
       {/* ================= SIDE MENU ================= */}
       <SideMenu />
+      </div>
 
       {/* ================= UNLINK MODAL ================= */}
       {unlinkStudent && (

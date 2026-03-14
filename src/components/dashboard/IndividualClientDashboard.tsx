@@ -26,7 +26,7 @@ export default function IndividualClientDashboard() {
   const [loading, setLoading] = useState(true)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-  const primaryAction = permissions?.primary_action     // "ADD_STUDENT" | "UPGRADE_PLAN"
+  const primaryAction = permissions?.primary_action
   const slotsUsed = permissions?.slots_used ?? 0
   const slotsTotal = permissions?.slots_total ?? 0
   const hasInstitutionalNna = permissions?.has_institutional_nna ?? false
@@ -43,7 +43,6 @@ export default function IndividualClientDashboard() {
       try {
         const { data, error } = await supabase.rpc("get_my_student_lists")
         if (error) throw error
-        console.log(data)
         setStudents(data)
       } catch (err) {
         console.error("Error fetching students:", err)
@@ -51,6 +50,7 @@ export default function IndividualClientDashboard() {
         setLoading(false)
       }
     }
+
     fetchStudents()
   }, [])
 
@@ -74,10 +74,10 @@ export default function IndividualClientDashboard() {
   const monitoredStudents = students?.monitored_students ?? []
 
   return (
-    <section className={`relative w-full flex-1 flex flex-col bg-black text-white font-montserrat ${managedStudents.length > 0 || monitoredStudents.length > 0 ? "min-h-screen" : "h-screen overflow-hidden"}`}>
+    <section className={`relative w-full min-h-screen flex bg-black text-white font-montserrat`}>
 
-      {/* ================= BACKGROUND ================= */}
-      <div className="absolute inset-0 h-full">
+      {/* BACKGROUND */}
+      <div className="absolute inset-0">
         <Image
           src="/hero.png"
           alt="Hero Background"
@@ -89,11 +89,15 @@ export default function IndividualClientDashboard() {
         <div className="absolute inset-0 bg-red-600/50 backdrop-brightness-95" />
       </div>
 
-      {/* ================= CONTENT ================= */}
-      <div className="relative z-10 flex-1 flex flex-col">
-        <div className="flex flex-col items-center pt-10 md:pt-16 xl:pt-20 text-center w-full max-w-screen-2xl mx-auto px-6 md:px-8 xl:px-10 pr-6 md:pr-24 xl:pr-28 pb-10 md:pb-16">
+      {/* MAIN LAYOUT */}
+      <div className="relative z-10 flex w-full">
 
-          {/* ====== MAIN ACTION BUTTON ====== */}
+    
+
+        {/* CONTENT */}
+        <div className="flex flex-col items-center flex-1 pt-10 md:pt-16 xl:pt-20 text-center px-6 md:px-8 xl:px-10 pb-10 md:pb-16">
+
+          {/* MAIN ACTION BUTTON */}
           <button
             onClick={handleMainAction}
             className="bg-black text-white rounded-full
@@ -106,17 +110,19 @@ export default function IndividualClientDashboard() {
                        shadow-2xl
                        hover:bg-zinc-900 transition"
           >
-            {primaryAction === "ADD_STUDENT" ? "Ingresar alumno" : "Ver planes de suscripción"}
+            {primaryAction === "ADD_STUDENT"
+              ? "Ingresar alumno"
+              : "Ver planes de suscripción"}
           </button>
 
-          {/* ====== SUCCESS TOAST ====== */}
+          {/* SUCCESS MESSAGE */}
           {successMessage && (
             <div className="mt-6 md:mt-8 w-full xl:max-w-6xl 2xl:max-w-[1280px] bg-green-700/80 border border-white/30 rounded-xl px-6 md:px-10 py-4 md:py-6 text-white font-bold text-base xl:text-lg 2xl:text-xl">
               {successMessage}
             </div>
           )}
 
-          {/* ====== LIST 1: ALUMNOS REGISTRADOS ====== */}
+          {/* REGISTERED STUDENTS */}
           <div className="w-full xl:max-w-6xl 2xl:max-w-[1280px] mt-10 md:mt-12 xl:mt-14 2xl:mt-16">
             <h2 className="text-white font-bold text-2xl md:text-3xl xl:text-4xl 2xl:text-5xl mb-6 md:mb-10 xl:mb-12 text-center">
               Alumnos registrados ({slotsUsed}/{slotsTotal})
@@ -124,14 +130,14 @@ export default function IndividualClientDashboard() {
 
             {loading ? (
               <div className="flex justify-center py-8">
-                <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                <p className="text-white/50 font-semibold text-base">Cargando…</p>
               </div>
             ) : managedStudents.length === 0 ? (
               <p className="text-white text-base md:text-lg xl:text-xl font-medium mt-4 text-center">
                 No hay registros de alumnos propios
               </p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3  gap-6 md:gap-8 xl:gap-10 mt-6 justify-items-center">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 md:gap-8 xl:gap-10 mt-6 justify-items-center">
                 {managedStudents.map((student) => (
                   <StudentCard
                     key={student.student_id}
@@ -143,18 +149,19 @@ export default function IndividualClientDashboard() {
             )}
           </div>
 
-          {/* ====== LIST 2: ALUMNOS EN SEGUIMIENTO ESCOLAR ====== */}
+          {/* SCHOOL MONITORING */}
           {hasInstitutionalNna && (
             <div className="w-full xl:max-w-6xl 2xl:max-w-[1280px] mt-16 md:mt-20 xl:mt-24">
               <h2 className="text-white font-bold text-2xl md:text-3xl xl:text-4xl 2xl:text-5xl mb-6 md:mb-10 xl:mb-12 text-center">
                 Alumnos en seguimiento escolar
               </h2>
+
               {monitoredStudents.length === 0 ? (
                 <p className="text-white/70 text-sm md:text-base xl:text-lg font-medium text-center">
                   No hay alumnos en seguimiento escolar
                 </p>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3  gap-6 md:gap-8 xl:gap-10 mt-6 justify-items-center">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 md:gap-8 xl:gap-10 mt-6 justify-items-center">
                   {monitoredStudents.map((student) => (
                     <StudentCard
                       key={student.student_id}
@@ -169,11 +176,10 @@ export default function IndividualClientDashboard() {
           )}
 
         </div>
+
+            {/* SIDE MENU */}
+        <SideMenu />
       </div>
-
-      {/* ================= SIDE MENU ================= */}
-      <SideMenu />
-
     </section>
   )
 }
@@ -198,22 +204,36 @@ function StudentCard({
         <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 xl:w-40 xl:h-40 rounded-full bg-white border-4 border-white/70 flex items-center justify-center group-hover:border-white group-hover:scale-105 group-hover:shadow-2xl transition-all duration-200 overflow-hidden shadow-lg">
           <User className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 xl:w-20 xl:h-20 text-[#ED3237]" />
         </div>
+
         {hasPending && (
           <span className="absolute top-1 right-1 md:top-3 md:right-3 w-5 h-5 md:w-7 md:h-7 bg-yellow-400 border-2 border-white rounded-full flex items-center justify-center shadow-md">
-            <svg className="w-3 h-3 md:w-4 md:h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v4m0 4h.01" />
+            <svg
+              className="w-3 h-3 md:w-4 md:h-4 text-black"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={3}
+                d="M12 9v4m0 4h.01"
+              />
             </svg>
           </span>
         )}
       </div>
+
       <span className="text-white font-bold text-sm md:text-base xl:text-lg text-center max-w-[160px] leading-snug">
         {student.full_name}
       </span>
+
       {hasPending && (
         <span className="text-yellow-300 text-xs font-semibold uppercase tracking-wider">
           Evaluación pendiente
         </span>
       )}
+
       {readonly && !hasPending && (
         <span className="text-white/50 text-xs font-semibold uppercase tracking-wider">
           Seguimiento

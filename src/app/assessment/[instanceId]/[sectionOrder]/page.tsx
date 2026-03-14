@@ -6,6 +6,7 @@ import Image from "next/image"
 import { supabase } from "@/lib/supabase/client"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
 import SideMenu from "@/components/ui/SideMenu"
+import PageLoader from "@/components/ui/PageLoader"
 
 interface StepperItem {
   display_order: number
@@ -121,12 +122,11 @@ function AssessmentContent() {
         <div className="absolute inset-0 bg-red-600/55 backdrop-brightness-95" />
       </div>
 
+      <div className="relative z-10 flex w-full">
+      <div className="flex-1">
+
       {/* ================= LOADING ================= */}
-      {loading && (
-        <div className="flex items-center justify-center min-h-[calc(100vh-130px)]">
-          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-        </div>
-      )}
+      {loading && <PageLoader dark />}
 
       {/* ================= ERROR ================= */}
       {!loading && error && !assessmentData && (
@@ -221,8 +221,12 @@ function AssessmentContent() {
       </div>
       )}
 
+      </div>
+
       {/* ================= SIDE MENU ================= */}
       <SideMenu />
+
+      </div>
 
     </section>
   )

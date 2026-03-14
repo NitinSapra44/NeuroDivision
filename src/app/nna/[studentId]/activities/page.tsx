@@ -7,6 +7,7 @@ import Image from "next/image"
 import { supabase } from "@/lib/supabase/client"
 import { useAppContext } from "@/store/app-context"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
+import PageLoader from "@/components/ui/PageLoader"
 
 // Matches view_nna_section_activities returned by get_nna_section_activities
 interface Activity {
@@ -97,13 +98,7 @@ function ActivitiesContent() {
     fetchAll()
   }, [studentId, sectionId])
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-white">
-        <div className="w-10 h-10 border-4 border-[#ED3237]/30 border-t-[#ED3237] rounded-full animate-spin" />
-      </div>
-    )
-  }
+  if (loading) return <PageLoader />
 
   if (error) {
     return (
@@ -215,14 +210,18 @@ function ActivitiesContent() {
         </div>
 
         {/* ================= RIGHT ICONS — desktop only ================= */}
-        <div className="hidden md:flex w-[clamp(70px,6vw,100px)] flex-col items-center pt-12 space-y-14">
-          <button onClick={() => router.push("/dashboard")} className="hover:scale-110 transition-transform">
-            <Home className="w-12 h-12 text-black stroke-[1.5]" />
+        <div className="hidden md:flex flex-col gap-8 items-center pt-16 px-4 shrink-0">
+          <button onClick={() => router.push("/dashboard")} className="hover:scale-110 active:scale-95 transition-all duration-200" title="Inicio">
+            <Home className="w-12 h-12 text-black" />
           </button>
-          <div className="hover:scale-110 transition-transform"><Bell className="w-12 h-12 text-black stroke-[1.5]" /></div>
-          <div className="hover:scale-110 transition-transform"><User className="w-12 h-12 text-black stroke-[1.5]" /></div>
-          <button onClick={handleLogout} disabled={loggingOut} className="hover:scale-110 transition-transform disabled:hover:scale-100">
-            <LogOut className="w-12 h-12 text-black stroke-[1.5]" />
+          <button className="opacity-40 cursor-not-allowed" title="Notificaciones (próximamente)" disabled>
+            <Bell className="w-12 h-12 text-black" />
+          </button>
+          <button className="opacity-40 cursor-not-allowed" title="Opciones de usuario (próximamente)" disabled>
+            <User className="w-12 h-12 text-black" />
+          </button>
+          <button onClick={handleLogout} disabled={loggingOut} className="hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" title="Cerrar sesión">
+            <LogOut className="w-12 h-12 text-black" />
           </button>
         </div>
 

@@ -3,18 +3,23 @@
 import { Play } from "lucide-react"
 
 function getYouTubeId(url: string): string | null {
+  if (!url) return null
+  // Raw 11-char video ID (no domain)
+  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url
+  // Normalize: ensure protocol is present so new URL() doesn't throw
+  const normalized = /^https?:\/\//i.test(url) ? url : `https://${url}`
   try {
-    const u = new URL(url)
+    const u = new URL(normalized)
     if (u.hostname === "youtu.be") return u.pathname.slice(1).split("?")[0]
     if (u.hostname.includes("youtube.com")) {
       if (u.pathname === "/watch") return u.searchParams.get("v")
-      const embedMatch = u.pathname.match(/\/embed\/([^/?]+)/)
-      if (embedMatch) return embedMatch[1]
-      const shortsMatch = u.pathname.match(/\/shorts\/([^/?]+)/)
-      if (shortsMatch) return shortsMatch[1]
+      const m = u.pathname.match(/\/(?:embed|shorts|live|video)\/([^/?]+)/)
+      if (m) return m[1]
     }
   } catch {}
-  return null
+  // Regex fallback for any remaining formats
+  const m = url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/)
+  return m ? m[1] : null
 }
 
 interface YouTubeEmbedProps {
@@ -23,7 +28,19 @@ interface YouTubeEmbedProps {
 }
 
 export default function YouTubeEmbed({ url, className = "" }: YouTubeEmbedProps) {
-  const videoId = getYouTubeId(url)
+  const trimmed = url?.trim() ?? ""
+  const videoId = getYouTubeId(trimmed)
+
+  // Local video file (e.g. /placeholder.mp4)
+  if (!videoId && (trimmed.startsWith("/") || (trimmed.startsWith("http") && !trimmed.includes("youtube")))) {
+    return (
+      <video
+        src={trimmed}
+        controls
+        className={`w-full h-full object-contain ${className}`}
+      />
+    )
+  }
 
   if (!videoId) {
     return (
