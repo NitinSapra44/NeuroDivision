@@ -215,7 +215,7 @@ function CourseDashboardContent() {
     const [{ data: nnaUsers }, { data: invitations }] = await Promise.all([
       supabase
         .from("nna_user")
-        .select("id, first_name, last_name, sex, birthdate")
+        .select("id, first_name, last_name, sex, birthdate, parent_email")
         .in("id", studentIds),
       supabase
         .from("nna_invitation")
@@ -226,24 +226,41 @@ function CourseDashboardContent() {
     const nnaMap = new Map((nnaUsers ?? []).map((u) => [u.id, u]))
     const invMap = new Map((invitations ?? []).map((i) => [i.nna_user_id, i.email]))
 
-    const rows: string[][] = [
-      ["Nombre", "Apellido", "Sexo", "Fecha de nacimiento", "Correo apoderado (opcional)"],
-      ...data.students.map((s) => {
-        const u = nnaMap.get(s.id)
-        return [
-          u?.first_name ?? s.full_name,
-          u?.last_name ?? "",
-          u?.sex ?? "",
-          u?.birthdate ?? "",
-          invMap.get(s.id) ?? "",
-        ]
-      }),
-    ]
+    // Fetch the template file and use it as the base workbook
+    const templateResponse = await fetch("/ListadoNeuroDiversión.xlsx")
+    const templateBuffer = await templateResponse.arrayBuffer()
+    const wb = XLSX.read(templateBuffer, { type: "array" })
+    const ws = wb.Sheets["Listado de curso"]
 
-    const ws = XLSX.utils.aoa_to_sheet(rows)
-    ws["!cols"] = [{ wch: 20 }, { wch: 20 }, { wch: 12 }, { wch: 22 }, { wch: 32 }]
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, "Alumnos")
+    // Clear existing data rows (row 5 onwards, index 4+) by removing those cells
+    const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:E4")
+    for (let r = 4; r <= range.e.r; r++) {
+      for (let c = 0; c <= 4; c++) {
+        const cellAddr = XLSX.utils.encode_cell({ r, c })
+        delete ws[cellAddr]
+      }
+    }
+
+    // Write student data starting at row 5 (index 4)
+    data.students.forEach((s, idx) => {
+      const u = nnaMap.get(s.id)
+      const rowData = [
+        u?.first_name ?? s.full_name,
+        u?.last_name ?? "",
+        u?.sex ?? "",
+        u?.birthdate ?? "",
+        invMap.get(s.id) ?? "",
+      ]
+      rowData.forEach((val, c) => {
+        const cellAddr = XLSX.utils.encode_cell({ r: 4 + idx, c })
+        ws[cellAddr] = { t: "s", v: val }
+      })
+    })
+
+    // Update the sheet range to cover all data rows
+    range.e.r = Math.max(3, 3 + data.students.length)
+    ws["!ref"] = XLSX.utils.encode_range(range)
+
     XLSX.writeFile(wb, `alumnos_${data.course_name.replace(/\s+/g, "_")}.xlsx`)
   }
 
@@ -477,10 +494,10 @@ function CourseDashboardContent() {
                           </a>
                           <button
                             onClick={() => {
-                              if (!data.is_plan_active || !data.can_add_student) return
+                              if (!data.is_plan_active) return
                               setUnlinkStudent(student)
                             }}
-                            disabled={!data.is_plan_active || !data.can_add_student}
+                            disabled={!data.is_plan_active}
                             className="text-red-300 underline underline-offset-2 font-semibold hover:text-red-200 transition text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline"
                           >
                             Desvincular
@@ -503,38 +520,36 @@ function CourseDashboardContent() {
 
       {/* ================= UNLINK MODAL ================= */}
       {unlinkStudent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-          <div className="bg-white rounded-3xl px-6 py-8 max-w-sm w-full text-center shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setUnlinkStudent(null)} />
+          <div className="relative bg-[#F2F2F2] w-[92%] max-w-sm rounded-[28px] border-[5px] border-black shadow-2xl px-6 py-8 text-center">
             <button
               onClick={() => setUnlinkStudent(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6 stroke-[2.5]" />
             </button>
-            {/* Logo / header */}
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-[#ED3237] rounded-full flex items-center justify-center">
-                <span className="text-white font-black text-xl">N</span>
-              </div>
+            <div className="flex justify-center mb-5">
+              <Image src="/logo.png" alt="Logo" width={100} height={100} className="object-contain w-20 h-20" />
             </div>
-            <h2 className="text-black font-black text-2xl mb-2 uppercase">ELIMINAR ALUMNO</h2>
+            <h2 className="text-black font-extrabold text-2xl mb-2 uppercase tracking-wide">ELIMINAR ALUMNO</h2>
             <p className="text-black font-bold text-base mb-1">
               ¿Estás seguro de eliminar a <br />{unlinkStudent.full_name}?
             </p>
-            <p className="text-gray-500 text-xs mb-8">
+            <p className="text-gray-500 text-xs mb-6">
               Esta acción liberará un cupo en tu curso, pero se borrará permanentemente todo su historial de evaluaciones. Esta acción no se puede deshacer.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-4">
               <button
                 onClick={handleUnlink}
                 disabled={unlinking}
-                className="flex-1 bg-[#ED3237] text-white rounded-full py-3 font-bold text-base hover:bg-red-700 transition disabled:opacity-50"
+                className="w-full h-[clamp(52px,3vw,72px)] bg-[#ED3237] text-white rounded-full border-4 border-black font-bold text-base hover:scale-[1.02] transition disabled:opacity-50 disabled:hover:scale-100"
               >
                 {unlinking ? "Eliminando..." : "Sí, eliminar"}
               </button>
               <button
                 onClick={() => setUnlinkStudent(null)}
-                className="flex-1 bg-gray-200 text-black rounded-full py-3 font-bold text-base hover:bg-gray-300 transition"
+                className="w-full h-[clamp(52px,3vw,72px)] bg-black text-white rounded-full border-4 border-white font-bold text-base hover:scale-[1.02] transition"
               >
                 No
               </button>
@@ -545,28 +560,26 @@ function CourseDashboardContent() {
 
       {/* ================= ADD STUDENT MODAL ================= */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center font-montserrat">
+        <div className="fixed inset-0 z-50 flex items-center justify-center font-montserrat px-4" onClick={() => setShowAddModal(false)}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-          {/* Backdrop — hero + red overlay */}
-          <Image src="/hero.png" alt="" fill quality={100} className="object-cover object-center" />
-          <div className="absolute inset-0 bg-red-600/50" />
-          <div className="absolute inset-0" onClick={() => setShowAddModal(false)} />
+          {/* Modal card */}
+          <div className="relative w-full max-w-2xl bg-[#F2F2F2] rounded-[28px] border-[5px] border-black shadow-2xl px-8 py-8 overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
 
-          {/* Modal card — 60% wide with #F1F1F2 bg */}
-          <div className="relative z-10 w-[60%] min-w-105 max-w-3xl rounded-3xl overflow-hidden shadow-2xl" style={{ backgroundColor: "#F1F1F2F2" }}>
+            <button
+              onClick={() => setShowAddModal(false)}
+              className="absolute top-4 right-4"
+            >
+              <X className="w-6 h-6 stroke-[2.5]" />
+            </button>
 
-            {/* Content */}
-            <div className="relative z-10 px-10 py-10">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="absolute top-4 right-4 text-black/50 hover:text-black"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            <div className="flex justify-center mb-4">
+              <Image src="/logo.png" alt="Logo" width={80} height={80} className="object-contain w-16 h-16" />
+            </div>
 
-              <h2 className="text-black font-black text-2xl text-center mb-8 tracking-wide">
-                INGRESAR ALUMNO
-              </h2>
+            <h2 className="text-black font-extrabold text-2xl text-center mb-6 tracking-wide uppercase">
+              INGRESAR ALUMNO
+            </h2>
 
               <form onSubmit={handleAddStudent} className="space-y-4">
 
@@ -666,13 +679,12 @@ function CourseDashboardContent() {
                 <button
                   type="submit"
                   disabled={addLoading}
-                  className="w-full bg-black text-white rounded-full py-3 text-lg font-bold hover:bg-zinc-900 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                  className="w-full h-[clamp(52px,3vw,72px)] bg-[#ED3237] text-white rounded-full border-4 border-black text-lg font-bold hover:scale-[1.02] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 mt-2"
                 >
                   {addLoading ? "Registrando..." : "Confirmar"}
                 </button>
 
               </form>
-            </div>
           </div>
         </div>
       )}

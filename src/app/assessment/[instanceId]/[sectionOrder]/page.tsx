@@ -123,6 +123,8 @@ function AssessmentContent() {
       </div>
 
       <div className="relative z-10 flex w-full">
+      {/* Left spacer to balance the right SideMenu and keep content centered */}
+      <div className="hidden md:block w-20 xl:w-24 shrink-0" />
       <div className="flex-1">
 
       {/* ================= LOADING ================= */}

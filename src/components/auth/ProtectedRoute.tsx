@@ -6,9 +6,20 @@ import PageLoader from "@/components/ui/PageLoader"
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
     const router = useRouter()
-    const { permissions, setPermissions, isLoading, setIsLoading } = useAppContext()
+    const { permissions, setPermissions, isLoading, setIsLoading, clearContext } = useAppContext()
     // Use a ref to prevent double-firing in strict mode or rapid re-renders
     const checked = useRef(false)
+
+    // Redirect to login when session expires
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === "SIGNED_OUT") {
+                clearContext()
+                router.push("/login")
+            }
+        })
+        return () => subscription.unsubscribe()
+    }, [router, clearContext])
 
     useEffect(() => {
         const checkAuth = async () => {

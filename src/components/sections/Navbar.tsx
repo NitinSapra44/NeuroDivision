@@ -33,7 +33,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="w-full bg-white relative z-50 overflow-x-hidden">
+    <header className="w-full bg-white relative z-50">
 
       {/* Main Navbar Container */}
       <div className="w-full mx-auto px-6 md:px-8 2xl:px-10 py-3 flex items-center justify-between">
@@ -95,9 +95,9 @@ export default function Navbar() {
       {/* 3-Color Strip */}
       <div className="w-full h-2 md:h-3 xl:h-4 bg-gradient-to-r from-[#E11B22] via-[#FFCC00] to-[#80C342]" />
 
-      {/* Mobile Dropdown Menu */}
+      {/* Mobile Dropdown Menu — absolute so it overlays the page */}
       {menuOpen && (
-        <nav className="xl:hidden bg-white border-t border-gray-100 shadow-lg">
+        <nav className="xl:hidden absolute top-full left-0 right-0 bg-white border-t border-gray-100 shadow-lg z-50">
           <ul className="flex flex-col py-2">
             {navItems.map((item) => (
               <li key={item.href}>

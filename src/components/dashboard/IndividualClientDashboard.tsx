@@ -92,7 +92,8 @@ export default function IndividualClientDashboard() {
       {/* MAIN LAYOUT */}
       <div className="relative z-10 flex w-full">
 
-    
+        {/* Left spacer to balance the right SideMenu and keep content centered */}
+        <div className="hidden md:block w-20 xl:w-24 shrink-0" />
 
         {/* CONTENT */}
         <div className="flex flex-col items-center flex-1 pt-10 md:pt-16 xl:pt-20 text-center px-6 md:px-8 xl:px-10 pb-10 md:pb-16">

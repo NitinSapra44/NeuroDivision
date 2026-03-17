@@ -122,6 +122,13 @@ export default function TeacherDashboard() {
 }
 
 function CourseCard({ course, onEnter }: { course: Course; onEnter: () => void }) {
+  const [loading, setLoading] = useState(false)
+
+  const handleClick = () => {
+    setLoading(true)
+    onEnter()
+  }
+
   return (
     <div className="w-full bg-black/40 border border-white/20 rounded-2xl px-6 md:px-8 py-5 md:py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 backdrop-blur-sm">
 
@@ -140,10 +147,11 @@ function CourseCard({ course, onEnter }: { course: Course; onEnter: () => void }
 
       {/* Enter Button */}
       <button
-        onClick={onEnter}
-        className="flex items-center gap-2 bg-black text-white rounded-full border-2 border-white px-6 py-2.5 text-sm md:text-base font-bold hover:bg-zinc-900 transition shrink-0"
+        onClick={handleClick}
+        disabled={loading}
+        className="flex items-center gap-2 bg-black text-white rounded-full border-2 border-white px-6 py-2.5 text-sm md:text-base font-bold hover:bg-zinc-900 transition shrink-0 disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        Entrar <ArrowRight className="w-4 h-4" />
+        {loading ? "Cargando..." : <><span>Entrar</span><ArrowRight className="w-4 h-4" /></>}
       </button>
 
     </div>

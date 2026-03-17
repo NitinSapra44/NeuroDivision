@@ -47,10 +47,10 @@ export default function HomePage() {
   return (
     <>
       <div className="w-full bg-[#FCCD2A] font-montserrat py-8 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row rounded-2xl overflow-hidden shadow-lg border-2 border-white">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:h-[clamp(300px,40vw,560px)]">
 
           {/* LEFT: Video + Title */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             <div className="w-full aspect-video bg-black">
               <video
                 src="/Homepage.mp4"
@@ -70,8 +70,8 @@ export default function HomePage() {
           </div>
 
           {/* RIGHT: Gallery */}
-          <aside className="w-full md:w-64 lg:w-72 flex flex-col bg-[#FCCD2A]">
-            <ul className="flex-1 overflow-y-auto flex flex-col gap-3 p-3">
+          <aside className="w-full md:w-[38%] flex flex-col bg-[#FCCD2A] md:overflow-hidden">
+            <ul className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 p-3">
               {galleryItems.map((item) => (
                 <li
                   key={item.src}

@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { Home, Bell, User, LogOut, CornerUpLeft, ArrowRight } from "lucide-react"
+import { Home, CornerUpLeft, ArrowRight } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
-import { useAppContext } from "@/store/app-context"
-import ProtectedRoute from "@/components/auth/ProtectedRoute"
+import { useNnaContext } from "../../NnaContext"
 import PageLoader from "@/components/ui/PageLoader"
 import ResponseModal from "@/components/ui/ResponseModal"
 import YouTubeEmbed, { VideoPlaceholder } from "@/components/ui/YouTubeEmbed"
 
-// Matches view_nna_activity_detail returned by get_nna_activity_detail
 interface ActivityDetail {
   activity_id: number
   program_id: number
@@ -23,23 +21,8 @@ interface ActivityDetail {
   result_id: number | null
 }
 
-interface ProgressMetric {
-  section_id: number
-  section_name: string
-  has_star: boolean
-}
-
-interface StudentInfo {
-  first_name: string
-  last_name: string
-}
-
 export default function ActivityPage() {
-  return (
-    <ProtectedRoute>
-      <ActivityContent />
-    </ProtectedRoute>
-  )
+  return <ActivityContent />
 }
 
 function ActivityContent() {
@@ -51,50 +34,25 @@ function ActivityContent() {
   const sectionId = searchParams.get("section_id") ?? ""
   const sectionName = searchParams.get("section_name") ?? ""
 
-  const { clearContext } = useAppContext()
+  const { student, metrics } = useNnaContext()
   const [activity, setActivity] = useState<ActivityDetail | null>(null)
-  const [student, setStudent] = useState<StudentInfo | null>(null)
-  const [metrics, setMetrics] = useState<ProgressMetric[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [navigating, setNavigating] = useState(false)
-  const [loggingOut, setLoggingOut] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [resultType, setResultType] = useState<"logrado" | "porLograr" | null>(null)
   const [buttonsBlocked, setButtonsBlocked] = useState(false)
 
-  const handleLogout = async () => {
-    setLoggingOut(true)
-    try {
-      await supabase.auth.signOut()
-      clearContext()
-      router.push("/login")
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoggingOut(false)
-    }
-  }
-
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchActivity = async () => {
       try {
-        const [activityRes, dashboardRes] = await Promise.all([
-          supabase.rpc("get_nna_activity_detail", {
-            p_nna_user_id: studentId,
-            p_activity_id: activityId,
-          }),
-          supabase.rpc("get_nna_dashboard_overview", {
-            p_nna_user_id: studentId,
-          }),
-        ])
-        if (activityRes.error) throw activityRes.error
-        setActivity(activityRes.data)
-        if (!dashboardRes.error && dashboardRes.data) {
-          setStudent(dashboardRes.data.student)
-          setMetrics(dashboardRes.data.progress_metrics ?? [])
-        }
+        const { data, error: rpcError } = await supabase.rpc("get_nna_activity_detail", {
+          p_nna_user_id: studentId,
+          p_activity_id: activityId,
+        })
+        if (rpcError) throw rpcError
+        setActivity(data)
       } catch (err: any) {
         console.error(err)
         setError("No se pudo cargar la actividad.")
@@ -102,8 +60,7 @@ function ActivityContent() {
         setLoading(false)
       }
     }
-
-    fetchAll()
+    fetchActivity()
   }, [studentId, activityId])
 
   const handleResultSelect = async (type: "logrado" | "porLograr") => {
@@ -143,9 +100,7 @@ function ActivityContent() {
         p_current_activity_id: activityId,
       })
       if (nextError) throw nextError
-
       setModalOpen(false)
-
       if (nextId) {
         router.push(`/nna/${studentId}/activity/${nextId}?section_id=${sectionId}&section_name=${encodeURIComponent(sectionName)}`)
       } else {
@@ -165,7 +120,7 @@ function ActivityContent() {
 
   if (error && !activity) {
     return (
-      <div className="h-screen flex items-center justify-center bg-white font-montserrat">
+      <div className="h-full flex items-center justify-center font-montserrat">
         <div className="text-center px-6">
           <p className="text-xl font-bold text-gray-800 mb-6">{error}</p>
           <button
@@ -179,194 +134,117 @@ function ActivityContent() {
     )
   }
 
-  // Button visual state: prefer local selection, fall back to saved result
   const isLogrado = resultType === "logrado" || (resultType === null && activity?.is_success === true)
   const isPorLograr = resultType === "porLograr" || (resultType === null && activity?.is_success === false)
 
   return (
-    <section className="h-full flex flex-col bg-[#F2F2F2] font-montserrat overflow-x-hidden ">
-      <div className="flex w-full h-full flex-col md:flex-row">
+    <div className="h-full px-[clamp(16px,3vw,60px)] pt-6 md:pt-12 pb-24 md:pb-8 overflow-auto overflow-x-hidden font-montserrat">
 
-        {/* ================= LEFT SIDEBAR — desktop ================= */}
-        <div className="hidden lg:flex w-[clamp(160px,13vw,220px)] flex-col items-center pt-6 border-r border-gray-100 shrink-0">
-          <div className="w-20 h-20 lg:w-28 lg:h-28 rounded-full bg-[#ED3237] flex items-center justify-center shadow-sm">
-            <User className="w-10 h-10 lg:w-14 lg:h-14 text-white" />
-          </div>
-          <h2 className="text-[#ED3237] font-bold mt-4 tracking-tight">
-            {student?.first_name ?? ""}
-          </h2>
-          <div className="mt-10 w-full px-4">
-            <div className="flex flex-col gap-0 space-y-8">
-              {metrics.map((m) => (
-                <div key={m.section_id} className="flex flex-col items-center">
-                  <span className={`text-4xl leading-none ${m.has_star ? "text-[#ED3237]" : "text-gray-400"}`}>★</span>
-                  <p className={`text-[10px] sm:text-xs font-bold mt-1 uppercase tracking-tighter ${m.has_star ? "text-[#ED3237]" : "text-gray-600"}`}>
-                    {m.section_name}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ================= MAIN CONTENT ================= */}
-        <div className="flex-1 h-full w-full px-[clamp(16px,3vw,60px)] pt-6 md:pt-12 pb-24 md:pb-8 overflow-auto overflow-x-hidden">
-
-          {/* Desktop header */}
-          <div className="hidden lg:flex relative items-center justify-center mb-10">
-            <div className="absolute left-0 flex items-center gap-6">
-              <button onClick={() => router.push(`/nna/${studentId}`)} className="hover:scale-110 transition-transform">
-                <Home className="w-8 h-8 md:w-10 md:h-10 text-[#000000]" />
-              </button>
-              <button onClick={() => router.push(`/nna/${studentId}/activities?section_id=${sectionId}&section_name=${encodeURIComponent(sectionName)}`)} className="hover:scale-110 transition-transform">
-                <CornerUpLeft className="w-8 h-8 md:w-10 md:h-10 text-[#000000]" />
-              </button>
-            </div>
-            <h1 className="text-[clamp(24px,2.5vw,48px)] font-bold">
-              Actividad
-            </h1>
-          </div>
-
-          {/* Mobile/tablet: nav + student name + stars */}
-          <div className="flex lg:hidden items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <button onClick={() => router.push(`/nna/${studentId}`)} className="hover:scale-110 transition-transform">
-                <Home className="w-7 h-7 text-black" />
-              </button>
-              <button onClick={() => router.push(`/nna/${studentId}/activities?section_id=${sectionId}&section_name=${encodeURIComponent(sectionName)}`)} className="hover:scale-110 transition-transform">
-                <CornerUpLeft className="w-7 h-7 text-black" />
-              </button>
-            </div>
-            {student && <p className="text-[#ED3237] font-bold text-lg">{student.first_name}</p>}
-            <div className="w-14" />
-          </div>
-          {metrics.length > 0 && (
-            <div className="flex lg:hidden justify-center gap-4 flex-wrap mb-4">
-              {metrics.map((m) => (
-                <div key={m.section_id} className="flex flex-col items-center">
-                  <span className={m.has_star ? "text-[#ED3237] text-xl" : "text-gray-400 text-xl"}>★</span>
-                  <p className="text-xs font-bold text-center mt-1">{m.section_name}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* VIDEO + TEXT — video above on tablet portrait, side-by-side on desktop */}
-          <div className="flex flex-col lg:flex-row gap-[clamp(16px,2vw,40px)] items-stretch">
-
-            {/* VIDEO BOX */}
-            <div className="w-full lg:w-[48%] h-56 md:h-72 lg:h-80 bg-[#ED3237] rounded-2xl border-[3px] border-black flex items-center justify-center overflow-hidden shrink-0">
-              {activity?.video_url ? (
-                <YouTubeEmbed url={activity.video_url} />
-              ) : (
-                <VideoPlaceholder />
-              )}
-            </div>
-
-            {/* RIGHT TEXT BLOCK */}
-            <div className="w-full md:flex-1 mt-4 md:mt-0 flex flex-col justify-start gap-4 md:gap-6">
-
-              <div>
-                <h2 className="text-[clamp(14px,1.1vw,20px)] font-bold mb-1 md:mb-2 text-right uppercase">
-                  Objetivo:
-                </h2>
-                <p className="text-gray-700 text-[clamp(13px,0.95vw,17px)] leading-relaxed">
-                  {activity?.objetive_specific}
-                </p>
-              </div>
-
-              <div>
-                <h2 className="text-[clamp(14px,1.1vw,20px)] font-bold mb-1 md:mb-2 text-right uppercase">
-                  Instrucciones:
-                </h2>
-                <p className="text-gray-700 text-[clamp(13px,0.95vw,17px)] leading-relaxed">
-                  {activity?.instruction}
-                </p>
-              </div>
-
-            </div>
-          </div>
-
-          {/* ERROR */}
-          {error && (
-            <div className="mt-6 bg-red-100 border border-red-300 rounded-xl px-6 py-4 text-red-800 font-semibold text-center">
-              {error}
-            </div>
-          )}
-
-          {/* QUESTION + RESPONSE BUTTONS */}
-          <div className="mt-8 md:mt-12">
-            <p className="text-[clamp(15px,1.1vw,20px)] text-gray-800 mb-5 text-center">
-              {activity?.question ?? "¿Es capaz de realizar al menos el 50% de la actividad de manera acertada?"}
-            </p>
-
-            {/* LOGRADO / POR LOGRAR — equal width, side by side */}
-            <div className="flex gap-6 max-w-sm mx-auto w-full">
-              <button
-                onClick={() => handleResultSelect("logrado")}
-                disabled={saving || buttonsBlocked}
-                className={`flex-1 h-14 text-white text-base font-bold rounded-full border-[3px] border-black transition hover:scale-[1.04] hover:shadow-md disabled:opacity-50 disabled:hover:scale-100 ${
-                  isLogrado ? "bg-[#80C342]" : "bg-[#848688] hover:bg-[#80C342]"
-                }`}
-              >
-                {saving && resultType === "logrado" ? "Guardando..." : "Logrado"}
-              </button>
-
-              <button
-                onClick={() => handleResultSelect("porLograr")}
-                disabled={saving || buttonsBlocked}
-                className={`flex-1 h-14 text-white text-base font-bold rounded-full border-[3px] border-black transition hover:scale-[1.04] hover:shadow-md disabled:opacity-50 disabled:hover:scale-100 ${
-                  isPorLograr ? "bg-[#F02E2E]" : "bg-[#848688] hover:bg-[#F02E2E]"
-                }`}
-              >
-                {saving && resultType === "porLograr" ? "Guardando..." : "Por lograr"}
-              </button>
-
-                <button
-                onClick={handleGoNext}
-                disabled={navigating}
-                className="flex-1 flex items-center justify-center gap-1 h-14 text-base font-bold text-[#848688] underline transition hover:scale-[1.04] hover:shadow-md disabled:opacity-50 disabled:hover:scale-100"
-              >
-                {navigating ? "Cargando..." : <> Siguiente <ArrowRight className="w-5 h-5 text-[#848688]" /></>}
-              </button>
-            </div>
-
-            {/* SIGUIENTE ACTIVIDAD — visible whenever an answer has been given and modal is closed */}
-            {/* {(isLogrado || isPorLograr) && !modalOpen && (
-              <button
-                onClick={handleGoNext}
-                disabled={navigating}
-                className="mt-4 w-full h-[clamp(56px,4vw,72px)] bg-[#ED3237] text-white text-[clamp(1.1rem,1.4vw,1.6rem)] font-extrabold rounded-full border-4 border-black shadow-lg hover:scale-[1.01] hover:shadow-xl transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                {navigating ? "Cargando..." : "Siguiente actividad"}
-              </button>
-            )} */}
-          </div>
-
-        </div>
-
-        {/* ================= RIGHT ICONS — desktop ================= */}
-        <div className="hidden lg:flex flex-col gap-8 items-center pt-16 px-4 shrink-0">
-          <button className="opacity-40 cursor-not-allowed" title="Notificaciones (próximamente)" disabled>
-            <Bell className="w-12 h-12 text-black" />
+      {/* Desktop header */}
+      <div className="hidden lg:flex relative items-center justify-center mb-10">
+        <div className="absolute left-0 flex items-center gap-6">
+          <button onClick={() => router.push(`/nna/${studentId}`)} className="hover:scale-110 transition-transform">
+            <Home className="w-8 h-8 md:w-10 md:h-10 text-black" />
           </button>
-          <button className="opacity-40 cursor-not-allowed" title="Opciones de usuario (próximamente)" disabled>
-            <User className="w-12 h-12 text-black" />
-          </button>
-          <button onClick={handleLogout} disabled={loggingOut} className="hover:scale-110 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" title="Cerrar sesión">
-            <LogOut className="w-12 h-12 text-black" />
+          <button onClick={() => router.push(`/nna/${studentId}/activities?section_id=${sectionId}&section_name=${encodeURIComponent(sectionName)}`)} className="hover:scale-110 transition-transform">
+            <CornerUpLeft className="w-8 h-8 md:w-10 md:h-10 text-black" />
           </button>
         </div>
-
+        <h1 className="text-[clamp(24px,2.5vw,48px)] font-bold">Actividad</h1>
       </div>
 
-      {/* ================= MOBILE BOTTOM NAV ================= */}
-      <div className="fixed bottom-0 left-0 w-full h-16 lg:hidden bg-white border-t flex justify-around items-center z-20">
-        <Bell className="w-6 h-6 text-black" />
-        <User className="w-6 h-6 text-black" />
-        <button onClick={handleLogout} disabled={loggingOut} className="hover:scale-110 transition-transform disabled:hover:scale-100">
-          <LogOut className="w-6 h-6 text-black" />
-        </button>
+      {/* Mobile/tablet header */}
+      <div className="flex lg:hidden items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.push(`/nna/${studentId}`)} className="hover:scale-110 transition-transform">
+            <Home className="w-7 h-7 text-black" />
+          </button>
+          <button onClick={() => router.push(`/nna/${studentId}/activities?section_id=${sectionId}&section_name=${encodeURIComponent(sectionName)}`)} className="hover:scale-110 transition-transform">
+            <CornerUpLeft className="w-7 h-7 text-black" />
+          </button>
+        </div>
+        {student && <p className="text-[#ED3237] font-bold text-lg">{student.first_name}</p>}
+        <div className="w-14" />
+      </div>
+
+      {/* Mobile stars */}
+      {metrics.length > 0 && (
+        <div className="flex lg:hidden justify-center gap-4 flex-wrap mb-4">
+          {metrics.map((m) => (
+            <div key={m.section_id} className="flex flex-col items-center">
+              <span className={m.has_star ? "text-[#ED3237] text-xl" : "text-gray-400 text-xl"}>★</span>
+              <p className="text-xs font-bold text-center mt-1">{m.section_name}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* VIDEO + TEXT */}
+      <div className="flex flex-col lg:flex-row gap-[clamp(16px,2vw,40px)] items-stretch">
+        <div className="w-full lg:w-[48%] h-56 md:h-72 lg:h-80 bg-[#ED3237] rounded-2xl border-[3px] border-black flex items-center justify-center overflow-hidden shrink-0">
+          {activity?.video_url ? (
+            <YouTubeEmbed url={activity.video_url} />
+          ) : (
+            <VideoPlaceholder />
+          )}
+        </div>
+
+        <div className="w-full md:flex-1 mt-4 md:mt-0 flex flex-col justify-start gap-4 md:gap-6">
+          <div>
+            <h2 className="text-[clamp(14px,1.1vw,20px)] font-bold mb-1 md:mb-2 text-right uppercase">Objetivo:</h2>
+            <p className="text-gray-700 text-[clamp(13px,0.95vw,17px)] leading-relaxed">{activity?.objetive_specific}</p>
+          </div>
+          <div>
+            <h2 className="text-[clamp(14px,1.1vw,20px)] font-bold mb-1 md:mb-2 text-right uppercase">Instrucciones:</h2>
+            <p className="text-gray-700 text-[clamp(13px,0.95vw,17px)] leading-relaxed">{activity?.instruction}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ERROR */}
+      {error && (
+        <div className="mt-6 bg-red-100 border border-red-300 rounded-xl px-6 py-4 text-red-800 font-semibold text-center">
+          {error}
+        </div>
+      )}
+
+      {/* QUESTION + RESPONSE BUTTONS */}
+      <div className="mt-8 md:mt-12">
+        <p className="text-[clamp(15px,1.1vw,20px)] text-gray-800 mb-5 text-center">
+          {activity?.question ?? "¿Es capaz de realizar al menos el 50% de la actividad de manera acertada?"}
+        </p>
+
+        {/* Logrado / Por lograr / Siguiente — wider container, min-width per button */}
+        <div className="flex gap-4 max-w-lg mx-auto w-full">
+          <button
+            onClick={() => handleResultSelect("logrado")}
+            disabled={saving || buttonsBlocked}
+            className={`flex-1 min-w-[100px] h-14 text-white text-base font-bold rounded-full border-[3px] border-black transition hover:scale-[1.04] hover:shadow-md disabled:opacity-50 disabled:hover:scale-100 ${
+              isLogrado ? "bg-[#80C342]" : "bg-[#848688] hover:bg-[#80C342]"
+            }`}
+          >
+            {saving && resultType === "logrado" ? "Guardando..." : "Logrado"}
+          </button>
+
+          <button
+            onClick={() => handleResultSelect("porLograr")}
+            disabled={saving || buttonsBlocked}
+            className={`flex-1 min-w-[100px] h-14 text-white text-base font-bold rounded-full border-[3px] border-black transition hover:scale-[1.04] hover:shadow-md disabled:opacity-50 disabled:hover:scale-100 ${
+              isPorLograr ? "bg-[#F02E2E]" : "bg-[#848688] hover:bg-[#F02E2E]"
+            }`}
+          >
+            {saving && resultType === "porLograr" ? "Guardando..." : "Por lograr"}
+          </button>
+
+          {/* Siguiente: color-change hover instead of underline+scale */}
+          <button
+            onClick={handleGoNext}
+            disabled={navigating}
+            className="flex-1 min-w-[100px] flex items-center justify-center gap-1 h-14 text-base font-bold text-[#848688] transition-colors hover:text-black disabled:opacity-50"
+          >
+            {navigating ? "Cargando..." : <> Siguiente <ArrowRight className="w-5 h-5" /></>}
+          </button>
+        </div>
       </div>
 
       <ResponseModal
@@ -378,6 +256,6 @@ function ActivityContent() {
         confirming={navigating}
       />
 
-    </section>
+    </div>
   )
 }
