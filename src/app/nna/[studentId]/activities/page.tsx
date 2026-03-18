@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { Home } from "lucide-react"
+import { Home, User } from "lucide-react"
 import Image from "next/image"
 import { supabase } from "@/lib/supabase/client"
 import { useNnaContext } from "../NnaContext"
@@ -75,12 +75,15 @@ function ActivitiesContent() {
   }
 
   return (
-    <div className="h-full px-[clamp(16px,3vw,80px)] pt-6 md:pt-10 pb-24 md:pb-8 overflow-auto overflow-x-hidden">
+    <div className="min-h-full bg-[#F2F2F2] px-[clamp(16px,3vw,80px)] pt-6 md:pt-10 pb-24 md:pb-8 overflow-auto overflow-x-hidden">
 
-      {/* Mobile: student name + stars */}
-      {metrics.length > 0 && (
-        <div className="flex md:hidden flex-col items-center mb-4">
-          {student && <p className="text-[#ED3237] font-bold text-lg mb-2">{student.first_name}</p>}
+      {/* Avatar + name + stars — mobile only (left sidebar handles desktop) */}
+      <div className="flex md:hidden flex-col items-center mb-6">
+        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#ED3237] flex items-center justify-center shadow-sm mb-2">
+          <User className="w-8 h-8 md:w-10 md:h-10 text-white" />
+        </div>
+        {student && <p className="text-[#ED3237] font-bold text-lg mb-2">{student.first_name}</p>}
+        {metrics.length > 0 && (
           <div className="flex justify-center gap-4 flex-wrap">
             {metrics.map((m) => (
               <div key={m.section_id} className="flex flex-col items-center">
@@ -89,14 +92,14 @@ function ActivitiesContent() {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Header with home button + title */}
+      {/* Header with home + title */}
       <div className="relative flex items-center justify-center mb-8 md:mb-12">
-        <div className="absolute left-0">
+        <div className="absolute left-0 hidden md:block">
           <button onClick={() => router.push(`/nna/${studentId}`)} className="hover:scale-110 transition-transform">
-            <Home className="w-8 h-8 md:w-12 md:h-12 text-black" />
+            <Home className="w-10 h-10 md:w-12 md:h-12 text-[#ED3237]" />
           </button>
         </div>
         <h1 className="text-[clamp(18px,2.5vw,48px)] font-bold text-black text-center px-12">

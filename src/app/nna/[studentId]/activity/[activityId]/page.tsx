@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { Home, CornerUpLeft, ArrowRight } from "lucide-react"
+import { Home, User, CornerUpLeft, ArrowRight } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { useNnaContext } from "../../NnaContext"
 import PageLoader from "@/components/ui/PageLoader"
@@ -140,36 +140,40 @@ function ActivityContent() {
   return (
     <div className="h-full px-[clamp(16px,3vw,60px)] pt-6 md:pt-12 pb-24 md:pb-8 overflow-auto overflow-x-hidden font-montserrat">
 
-      {/* Desktop header */}
-      <div className="hidden lg:flex relative items-center justify-center mb-10">
-        <div className="absolute left-0 flex items-center gap-6">
-          <button onClick={() => router.push(`/nna/${studentId}`)} className="hover:scale-110 transition-transform">
-            <Home className="w-8 h-8 md:w-10 md:h-10 text-black" />
-          </button>
-          <button onClick={() => router.push(`/nna/${studentId}/activities?section_id=${sectionId}&section_name=${encodeURIComponent(sectionName)}`)} className="hover:scale-110 transition-transform">
-            <CornerUpLeft className="w-8 h-8 md:w-10 md:h-10 text-black" />
-          </button>
+      {/* Avatar + name + stars — mobile only (left sidebar handles desktop) */}
+      <div className="flex md:hidden flex-col items-center mb-6">
+        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#ED3237] flex items-center justify-center shadow-sm mb-2">
+          <User className="w-8 h-8 md:w-10 md:h-10 text-white" />
         </div>
-        <h1 className="text-[clamp(24px,2.5vw,48px)] font-bold">Actividad</h1>
+        {student && <p className="text-[#ED3237] font-bold text-lg mb-2">{student.first_name}</p>}
+        {metrics.length > 0 && (
+          <div className="flex justify-center gap-4 flex-wrap">
+            {metrics.map((m) => (
+              <div key={m.section_id} className="flex flex-col items-center">
+                <span className={m.has_star ? "text-[#ED3237] text-xl" : "text-gray-400 text-xl"}>★</span>
+                <p className="text-xs font-bold text-center mt-1">{m.section_name}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Mobile/tablet header */}
-      <div className="flex lg:hidden items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
+      {/* Header with home + back + title */}
+      <div className="relative flex items-center justify-center mb-8 md:mb-12">
+        <div className="absolute left-0 hidden md:flex items-center gap-4">
           <button onClick={() => router.push(`/nna/${studentId}`)} className="hover:scale-110 transition-transform">
-            <Home className="w-7 h-7 text-black" />
+            <Home className="w-10 h-10 md:w-12 md:h-12 text-[#ED3237]" />
           </button>
           <button onClick={() => router.push(`/nna/${studentId}/activities?section_id=${sectionId}&section_name=${encodeURIComponent(sectionName)}`)} className="hover:scale-110 transition-transform">
-            <CornerUpLeft className="w-7 h-7 text-black" />
+            <CornerUpLeft className="w-10 h-10 md:w-12 md:h-12 text-[#ED3237]" />
           </button>
         </div>
-        {student && <p className="text-[#ED3237] font-bold text-lg">{student.first_name}</p>}
-        <div className="w-14" />
+        <h1 className="text-[clamp(18px,2.5vw,48px)] font-bold text-black text-center px-12">Actividad</h1>
       </div>
 
-      {/* Mobile stars */}
+      {/* Mobile stars — now replaced by top section, kept for md:hidden breakpoint safety */}
       {metrics.length > 0 && (
-        <div className="flex lg:hidden justify-center gap-4 flex-wrap mb-4">
+        <div className="hidden justify-center gap-4 flex-wrap mb-4">
           {metrics.map((m) => (
             <div key={m.section_id} className="flex flex-col items-center">
               <span className={m.has_star ? "text-[#ED3237] text-xl" : "text-gray-400 text-xl"}>★</span>

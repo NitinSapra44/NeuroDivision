@@ -215,7 +215,7 @@ function CourseDashboardContent() {
     const [{ data: nnaUsers }, { data: invitations }] = await Promise.all([
       supabase
         .from("nna_user")
-        .select("id, first_name, last_name, sex, birthdate, parent_email")
+        .select("id, first_name, last_name, sex, birthdate")
         .in("id", studentIds),
       supabase
         .from("nna_invitation")
@@ -226,42 +226,40 @@ function CourseDashboardContent() {
     const nnaMap = new Map((nnaUsers ?? []).map((u) => [u.id, u]))
     const invMap = new Map((invitations ?? []).map((i) => [i.nna_user_id, i.email]))
 
-    // Fetch the template file and use it as the base workbook
-    const templateResponse = await fetch("/ListadoNeuroDiversión.xlsx")
-    const templateBuffer = await templateResponse.arrayBuffer()
-    const wb = XLSX.read(templateBuffer, { type: "array" })
-    const ws = wb.Sheets["Listado de curso"]
-
-    // Clear existing data rows (row 5 onwards, index 4+) by removing those cells
-    const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1:E4")
-    for (let r = 4; r <= range.e.r; r++) {
-      for (let c = 0; c <= 4; c++) {
-        const cellAddr = XLSX.utils.encode_cell({ r, c })
-        delete ws[cellAddr]
-      }
-    }
-
-    // Write student data starting at row 5 (index 4)
-    data.students.forEach((s, idx) => {
+    // Build student rows to send to the API
+    const studentRows = data.students.map((s) => {
       const u = nnaMap.get(s.id)
-      const rowData = [
-        u?.first_name ?? s.full_name,
-        u?.last_name ?? "",
-        u?.sex ?? "",
-        u?.birthdate ?? "",
-        invMap.get(s.id) ?? "",
-      ]
-      rowData.forEach((val, c) => {
-        const cellAddr = XLSX.utils.encode_cell({ r: 4 + idx, c })
-        ws[cellAddr] = { t: "s", v: val }
-      })
+      const rawBirthdate = u?.birthdate ?? ""
+      let formattedBirthdate = rawBirthdate
+      if (rawBirthdate && /^\d{4}-\d{2}-\d{2}$/.test(rawBirthdate)) {
+        const [year, month, day] = rawBirthdate.split("-")
+        formattedBirthdate = `${day}-${month}-${year}`
+      }
+      return {
+        first_name: u?.first_name ?? s.full_name,
+        last_name: u?.last_name ?? "",
+        sex: u?.sex ?? "",
+        birthdate: formattedBirthdate,
+        parent_email: invMap.get(s.id) ?? "",
+      }
     })
 
-    // Update the sheet range to cover all data rows
-    range.e.r = Math.max(3, 3 + data.students.length)
-    ws["!ref"] = XLSX.utils.encode_range(range)
+    // Call API route (ExcelJS runs server-side — full style/color preservation)
+    const response = await fetch("/api/export-students", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ students: studentRows, course_name: data.course_name }),
+    })
 
-    XLSX.writeFile(wb, `alumnos_${data.course_name.replace(/\s+/g, "_")}.xlsx`)
+    if (!response.ok) return
+
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `alumnos_${data.course_name.replace(/\s+/g, "_")}.xlsx`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   // ===== BULK IMPORT =====

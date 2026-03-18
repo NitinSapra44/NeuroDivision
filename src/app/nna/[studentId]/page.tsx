@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Building2 } from "lucide-react"
+import { Building2, User } from "lucide-react"
 import { useNnaContext } from "./NnaContext"
 import PageLoader from "@/components/ui/PageLoader"
 
@@ -50,9 +50,12 @@ function NnaStudentContent() {
   return (
     <div className="h-full px-[clamp(16px,3vw,80px)] pt-6 md:pt-8 pb-24 md:pb-8 overflow-auto overflow-x-hidden">
 
-      {/* MOBILE: student name + institution badge + stars */}
+      {/* MOBILE: avatar + student name + institution badge + stars */}
       {metrics.length > 0 && (
         <div className="flex md:hidden flex-col items-center mb-6">
+          <div className="w-20 h-20 rounded-full bg-[#ED3237] flex items-center justify-center shadow-sm mb-3">
+            <User className="w-10 h-10 text-white" />
+          </div>
           {student?.institution_name && (
             <div className="flex items-center gap-1.5 mb-2 px-3 py-1 bg-gray-100 rounded-lg">
               <Building2 className="w-3.5 h-3.5 text-gray-500 shrink-0" />
