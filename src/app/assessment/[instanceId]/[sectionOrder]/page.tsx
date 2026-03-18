@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
+import PageLoader from "@/components/ui/PageLoader"
 
 interface StepperItem {
   display_order: number
@@ -104,14 +105,7 @@ function AssessmentContent() {
     }
   }
 
-  /* ── Loading: centered spinner over the persistent background ── */
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-130px)]">
-        <div className="w-12 h-12 rounded-full border-4 border-red-600/40 border-t-white animate-spin" />
-      </div>
-    )
-  }
+  if (loading) return <PageLoader inline bg="bg-transparent" />
 
   /* ── Error (no data) ── */
   if (error && !assessmentData) {

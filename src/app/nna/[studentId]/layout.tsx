@@ -106,7 +106,7 @@ function NnaLayoutContent({ children }: { children: React.ReactNode }) {
               className="hover:scale-110 active:scale-95 transition-all duration-200"
               title="Inicio"
             >
-              <Home className="w-12 h-12 text-[#ED3237]" />
+              <Home className="w-12 h-12 text-black" />
             </button>
             <button className="opacity-40 cursor-not-allowed" title="Notificaciones (próximamente)" disabled>
               <Bell className="w-12 h-12 text-black" />
@@ -129,7 +129,7 @@ function NnaLayoutContent({ children }: { children: React.ReactNode }) {
         {/* ===== MOBILE BOTTOM NAV ===== */}
         <div className="fixed bottom-0 left-0 w-full h-16 md:hidden bg-white border-t border-gray-200 flex justify-around items-center z-20">
           <button onClick={() => router.push("/dashboard")} className="hover:scale-110 transition-transform">
-            <Home className="w-6 h-6 text-[#ED3237]" />
+            <Home className="w-6 h-6 text-black" />
           </button>
           <button disabled className="opacity-40 cursor-not-allowed">
             <Bell className="w-6 h-6 text-black" />

@@ -6,6 +6,7 @@ import { Home, User } from "lucide-react"
 import Image from "next/image"
 import { supabase } from "@/lib/supabase/client"
 import { useNnaContext } from "../NnaContext"
+import PageLoader from "@/components/ui/PageLoader"
 
 interface Activity {
   activity_id: number
@@ -55,13 +56,7 @@ function ActivitiesContent() {
     fetchActivities()
   }, [studentId, sectionId])
 
-  if (loading) return (
-    <div className="w-full flex items-center justify-center min-h-screen bg-[#F2F2F2]">
-      <div className="w-48 h-[3px] overflow-hidden">
-        <div className="h-full w-1/3 bg-[#ED3237] animate-page-bar" />
-      </div>
-    </div>
-  )
+  if (loading) return <PageLoader inline bg="bg-[#F2F2F2]" />
 
   if (error) {
     return (

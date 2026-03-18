@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Home, User, CornerUpLeft, ArrowRight } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { useNnaContext } from "../../NnaContext"
+import PageLoader from "@/components/ui/PageLoader"
 import ResponseModal from "@/components/ui/ResponseModal"
 import YouTubeEmbed, { VideoPlaceholder } from "@/components/ui/YouTubeEmbed"
 
@@ -115,13 +116,7 @@ function ActivityContent() {
     }
   }
 
-  if (loading) return (
-    <div className="w-full flex items-center justify-center min-h-screen bg-[#F2F2F2]">
-      <div className="w-48 h-[3px] overflow-hidden">
-        <div className="h-full w-1/3 bg-[#ED3237] animate-page-bar" />
-      </div>
-    </div>
-  )
+  if (loading) return <PageLoader inline bg="bg-[#F2F2F2]" />
 
   if (error && !activity) {
     return (

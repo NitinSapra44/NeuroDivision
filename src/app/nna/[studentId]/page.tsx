@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Building2, User } from "lucide-react"
 import { useNnaContext } from "./NnaContext"
+import PageLoader from "@/components/ui/PageLoader"
 
 export default function NnaStudentPage() {
   return <NnaStudentContent />
@@ -39,13 +40,7 @@ function NnaStudentContent() {
     return () => window.removeEventListener("resize", calculate)
   }, [metrics])
 
-  if (dataLoading) return (
-    <div className="w-full flex items-center justify-center min-h-screen bg-[#F2F2F2]">
-      <div className="w-48 h-[3px] overflow-hidden">
-        <div className="h-full w-1/3 bg-[#ED3237] animate-page-bar" />
-      </div>
-    </div>
-  )
+  if (dataLoading) return <PageLoader inline bg="bg-[#F2F2F2]" />
 
   const cardColors = [
     "bg-[#9B69C2]", "bg-[#BCA9CE]", "bg-[#A366FF]",
