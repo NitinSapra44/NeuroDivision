@@ -1,8 +1,7 @@
 "use client"
-
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import ContactForm from "@/components/sections/ContactForm"
 import Footer from "@/components/sections/Footer"
 
@@ -18,7 +17,7 @@ const galleryItems: GalleryItem[] = [
 function ImageModal({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-9999 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
       onClick={onClose}
     >
       <div className="relative max-w-4xl w-[90%]" onClick={(e) => e.stopPropagation()}>
@@ -43,15 +42,27 @@ function ImageModal({ src, alt, onClose }: { src: string; alt: string; onClose: 
 export default function HomePage() {
   const router = useRouter()
   const [modalSrc, setModalSrc] = useState<{ src: string; alt: string } | null>(null)
+  const leftColRef = useRef<HTMLDivElement>(null)
+  const [leftHeight, setLeftHeight] = useState<number>(0)
+
+  useEffect(() => {
+    if (!leftColRef.current) return
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setLeftHeight(entry.contentRect.height)
+      }
+    })
+    observer.observe(leftColRef.current)
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <>
       <div className="w-full bg-[#FCCD2A] font-montserrat py-8 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:h-[clamp(300px,40vw,560px)]">
-
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[1fr_38%] gap-3 items-start">
           {/* LEFT: Video + Title */}
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="w-full aspect-video bg-black">
+          <div ref={leftColRef} className="flex flex-col">
+            <div className="w-full aspect-video bg-black rounded-xl overflow-hidden">
               <video
                 src="/Homepage.mp4"
                 controls
@@ -69,27 +80,47 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* RIGHT: Gallery */}
-          <aside className="w-full md:w-[38%] flex flex-col bg-[#FCCD2A] md:overflow-hidden">
-            <ul className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 p-3">
-              {galleryItems.map((item) => (
-                <li
-                  key={item.src}
-                  className="rounded-xl overflow-hidden cursor-pointer shrink-0"
-                  onClick={() => setModalSrc({ src: item.src, alt: item.alt })}
-                >
-                  <Image
-                    src={item.src}
-                    alt={item.alt}
-                    width={400}
-                    height={225}
-                    className="w-full aspect-video object-cover hover:scale-[1.02] transition"
-                  />
-                </li>
-              ))}
-            </ul>
+          {/* RIGHT: Gallery — scrollable, shows 2 images at a time */}
+          <aside
+            className="hidden md:flex flex-col gap-3 overflow-y-auto pr-1"
+            style={{ maxHeight: leftHeight > 0 ? `${leftHeight}px` : "520px" }}
+          >
+            {galleryItems.map((item) => (
+              <div
+                key={item.src}
+                className="rounded-xl overflow-hidden cursor-pointer shrink-0"
+                style={{ height: leftHeight > 0 ? `${(leftHeight - 12) / 2}px` : "250px" }}
+                onClick={() => setModalSrc({ src: item.src, alt: item.alt })}
+              >
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  width={400}
+                  height={225}
+                  className="w-full h-full object-cover hover:scale-[1.02] transition"
+                />
+              </div>
+            ))}
           </aside>
 
+          {/* Mobile Gallery — horizontal scroll */}
+          <div className="flex md:hidden gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+            {galleryItems.map((item) => (
+              <div
+                key={item.src}
+                className="rounded-xl overflow-hidden cursor-pointer shrink-0 w-[70%]"
+                onClick={() => setModalSrc({ src: item.src, alt: item.alt })}
+              >
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  width={400}
+                  height={225}
+                  className="w-full aspect-video object-cover"
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* CTA Button */}
