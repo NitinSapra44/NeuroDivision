@@ -61,8 +61,8 @@ export default function HomePage() {
       <div className="w-full bg-[#FCCD2A] font-montserrat py-8 px-4 md:px-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[1fr_38%] gap-3 items-start">
           {/* LEFT: Video + Title */}
-          <div ref={leftColRef} className="flex flex-col">
-            <div className="w-full aspect-video bg-black rounded-xl overflow-hidden">
+          <div ref={leftColRef} className="flex flex-col rounded-xl overflow-hidden">
+            <div className="w-full aspect-video bg-black">
               <video
                 src="/Homepage.mp4"
                 controls
