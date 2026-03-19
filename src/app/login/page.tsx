@@ -97,6 +97,7 @@ export default function LoginPage() {
 
                 <input
                   type="email"
+                  autoComplete="email"
                   placeholder="correo@ejemplo.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -131,6 +132,7 @@ export default function LoginPage() {
 
                 <input
                   type="password"
+                  autoComplete="current-password"
                   placeholder="Contraseña"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -187,6 +189,7 @@ export default function LoginPage() {
               </button>
 
               <button
+                type="button"
                 onClick={() => router.push('/forgot-password')}
                 className="mt-2 text-white text-sm md:text-lg font-bold underline underline-offset-4 hover:opacity-80 transition"
               >
@@ -201,6 +204,7 @@ export default function LoginPage() {
               </label>
 
               <button
+                type="button"
                 onClick={() => router.push('/signup')}
                 className="
                 w-full
