@@ -140,6 +140,16 @@ function ActivityContent() {
   return (
     <div className="h-full px-[clamp(16px,3vw,60px)] pt-6 md:pt-12 pb-24 md:pb-8 overflow-auto overflow-x-hidden font-montserrat">
 
+      {/* Mobile icon row — top left */}
+      <div className="flex md:hidden items-center gap-3 mb-4">
+        <button onClick={() => router.push(`/nna/${studentId}`)} className="hover:scale-110 transition-transform">
+          <Home className="w-8 h-8 text-[#ED3237]" />
+        </button>
+        <button onClick={() => router.push(`/nna/${studentId}/activities?section_id=${sectionId}&section_name=${encodeURIComponent(sectionName)}`)} className="hover:scale-110 transition-transform">
+          <CornerUpLeft className="w-8 h-8 text-[#ED3237]" />
+        </button>
+      </div>
+
       {/* Avatar + name + stars — mobile only (left sidebar handles desktop) */}
       <div className="flex md:hidden flex-col items-center mb-6">
         <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#ED3237] flex items-center justify-center shadow-sm mb-2">

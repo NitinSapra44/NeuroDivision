@@ -33,7 +33,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="w-full bg-white relative z-50">
+    <header className="w-full bg-white relative z-9999">
 
       {/* Main Navbar Container */}
       <div className="w-full mx-auto px-6 md:px-8 2xl:px-10 py-3 flex items-center justify-between">

@@ -210,45 +210,12 @@ function CourseDashboardContent() {
   // ===== EXPORT STUDENTS =====
   const handleDownloadStudents = async () => {
     if (!data) return
-    const studentIds = data.students.map((s) => s.id)
 
-    const [{ data: nnaUsers }, { data: invitations }] = await Promise.all([
-      supabase
-        .from("nna_user")
-        .select("id, first_name, last_name, sex, birthdate")
-        .in("id", studentIds),
-      supabase
-        .from("nna_invitation")
-        .select("nna_user_id, email")
-        .in("nna_user_id", studentIds),
-    ])
-
-    const nnaMap = new Map((nnaUsers ?? []).map((u) => [u.id, u]))
-    const invMap = new Map((invitations ?? []).map((i) => [i.nna_user_id, i.email]))
-
-    // Build student rows to send to the API
-    const studentRows = data.students.map((s) => {
-      const u = nnaMap.get(s.id)
-      const rawBirthdate = u?.birthdate ?? ""
-      let formattedBirthdate = rawBirthdate
-      if (rawBirthdate && /^\d{4}-\d{2}-\d{2}$/.test(rawBirthdate)) {
-        const [year, month, day] = rawBirthdate.split("-")
-        formattedBirthdate = `${day}-${month}-${year}`
-      }
-      return {
-        first_name: u?.first_name ?? s.full_name,
-        last_name: u?.last_name ?? "",
-        sex: u?.sex ?? "",
-        birthdate: formattedBirthdate,
-        parent_email: invMap.get(s.id) ?? "",
-      }
-    })
-
-    // Call API route (ExcelJS runs server-side — full style/color preservation)
+    // Download empty template (no student data)
     const response = await fetch("/api/export-students", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ students: studentRows, course_name: data.course_name }),
+      body: JSON.stringify({ students: [], course_name: data.course_name }),
     })
 
     if (!response.ok) return

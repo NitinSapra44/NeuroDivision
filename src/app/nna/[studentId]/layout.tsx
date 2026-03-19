@@ -44,7 +44,7 @@ function NnaLayoutContent({ children }: { children: React.ReactNode }) {
       }
     }
     fetchData()
-  }, [studentId, router])
+  }, [studentId])
 
   const handleLogout = async () => {
     setLoggingOut(true)

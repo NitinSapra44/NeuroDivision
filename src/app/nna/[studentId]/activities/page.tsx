@@ -75,7 +75,14 @@ function ActivitiesContent() {
   }
 
   return (
-    <div className="min-h-full bg-[#F2F2F2] px-[clamp(16px,3vw,80px)] pt-6 md:pt-10 pb-24 md:pb-8 overflow-auto overflow-x-hidden">
+    <div className="min-h-full bg-[#F2F2F2] px-[clamp(16px,3vw,80px)] pt-6 md:pt-12 pb-24 md:pb-8 overflow-auto overflow-x-hidden">
+
+      {/* Mobile icon row — top left */}
+      <div className="flex md:hidden items-center gap-3 mb-4">
+        <button onClick={() => router.push(`/nna/${studentId}`)} className="hover:scale-110 transition-transform">
+          <Home className="w-8 h-8 text-[#ED3237]" />
+        </button>
+      </div>
 
       {/* Avatar + name + stars — mobile only (left sidebar handles desktop) */}
       <div className="flex md:hidden flex-col items-center mb-6">
