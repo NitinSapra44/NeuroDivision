@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
 import Footer from "@/components/sections/Footer"
@@ -19,7 +19,7 @@ function formatPrice(value: number) {
   return `$ ${value.toLocaleString("es-CL")}`
 }
 
-export default function CheckoutPage() {
+function CheckoutPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const planId = searchParams.get("planId")
@@ -441,5 +441,17 @@ export default function CheckoutPage() {
       </div>
       <Footer />
     </>
+  )
+}
+
+export default function CheckoutPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#ED3237] flex items-center justify-center font-montserrat">
+        <p className="text-white text-lg">Cargando...</p>
+      </div>
+    }>
+      <CheckoutPage />
+    </Suspense>
   )
 }

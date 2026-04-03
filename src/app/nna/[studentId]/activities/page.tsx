@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Home, User } from "lucide-react"
 import Image from "next/image"
@@ -14,7 +14,11 @@ interface Activity {
 }
 
 export default function ActivitiesPage() {
-  return <ActivitiesContent />
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><p className="text-lg">Cargando...</p></div>}>
+      <ActivitiesContent />
+    </Suspense>
+  )
 }
 
 function ActivitiesContent() {

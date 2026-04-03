@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { User, Mail, Lock } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 
-export default function SignupPage() {
+function SignupPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
@@ -231,5 +231,17 @@ export default function SignupPage() {
 
       </div>
     </section>
+  )
+}
+
+export default function SignupPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#ED3237] flex items-center justify-center font-montserrat">
+        <p className="text-white text-lg">Cargando...</p>
+      </div>
+    }>
+      <SignupPage />
+    </Suspense>
   )
 }
