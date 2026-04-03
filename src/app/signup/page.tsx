@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { User, Mail, Lock } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 
@@ -14,6 +14,8 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false)
 
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirectTo")
 
   const handleSignup = async () => {
     setError(null)
@@ -54,7 +56,10 @@ export default function SignupPage() {
       if (authError) throw authError
 
       setSuccess(true)
-      setTimeout(() => router.push('/login'), 2500)
+      const loginTarget = redirectTo
+        ? `/login?redirectTo=${encodeURIComponent(redirectTo)}`
+        : '/login'
+      setTimeout(() => router.push(loginTarget), 2500)
     } catch (err: any) {
       setError(err.message || "Error al crear cuenta")
     } finally {
@@ -65,8 +70,6 @@ export default function SignupPage() {
   return (
     <section className="flex-1 flex flex-col  bg-[#ED3237] font-montserrat py-5">
       <div className="max-w-[1280px] w-[85%] md:w-[68%]  mx-auto">
-
-  
 
         <div className="space-y-6 md:space-y-8 xl:space-y-10 2xl:space-y-12 max-w-xl mx-auto xl:max-w-4xl 2xl:max-w-[1280px]">
 
@@ -205,14 +208,19 @@ export default function SignupPage() {
                 shadow-xl
                 disabled:opacity-50
                 disabled:cursor-not-allowed
-              
+
               "
             >
               {loading ? 'Creando cuenta...' : 'Crear cuenta'}
             </button>
 
             <button
-              onClick={() => router.push('/login')}
+              onClick={() => {
+                const target = redirectTo
+                  ? `/login?redirectTo=${encodeURIComponent(redirectTo)}`
+                  : '/login'
+                router.push(target)
+              }}
               className="text-white text-[clamp(14px,1vw,18px)] font-bold underline underline-offset-4 hover:opacity-80 transition"
             >
               Ya tengo cuenta

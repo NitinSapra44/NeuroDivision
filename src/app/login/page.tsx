@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { User, Lock } from "lucide-react"
 import { supabase } from "@/lib/supabase/client"
 import { useAppContext } from "@/store/app-context"
@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
 
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirectTo")
   const { setPermissions } = useAppContext()
 
   useEffect(() => {
@@ -51,7 +53,13 @@ export default function LoginPage() {
 
       console.log("LOGIN SUCCESS", authData)
 
-      // Fetch app context
+      // If there's a redirectTo param, skip get_app_context and redirect directly
+      if (redirectTo) {
+        router.push(redirectTo)
+        return
+      }
+
+      // Fetch app context only when no redirectTo
       console.log("Calling RPC get_app_context")
       const { data: contextData, error: contextError } = await supabase.rpc('get_app_context')
 
@@ -205,7 +213,12 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => router.push('/signup')}
+                onClick={() => {
+                  const target = redirectTo
+                    ? `/signup?redirectTo=${encodeURIComponent(redirectTo)}`
+                    : '/signup'
+                  router.push(target)
+                }}
                 className="
                 w-full
                 h-14 md:h-16 lg:h-[64px] xl:h-[72px] 2xl:h-[80px]
