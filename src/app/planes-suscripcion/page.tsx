@@ -70,8 +70,9 @@ const cardStatics: CardStaticProps[] = [
   },
 ]
 
-function formatPrice(price: number) {
-  return `$ ${price.toLocaleString("es-CL")}/mes`
+function formatPrice(price: number, cycleDays: number = 30) {
+  const suffix = cycleDays === 180 ? "6 meses" : "mes"
+  return `$ ${price.toLocaleString("es-CL")}/${suffix}`
 }
 
 function SubscriptionCard({
@@ -81,8 +82,9 @@ function SubscriptionCard({
   color,
   price,
   planId,
+  cycleDays,
   onSubscribe,
-}: CardStaticProps & { price?: number; planId?: number; onSubscribe: (planId: number) => void }) {
+}: CardStaticProps & { price?: number; planId?: number; cycleDays: number; onSubscribe: (planId: number) => void }) {
   const theColor = theme.colors[color]
   return (
     <article
@@ -101,7 +103,7 @@ function SubscriptionCard({
         />
       </header>
       <div className="text-center font-bold text-2xl mt-4 px-4">
-        {price !== undefined ? formatPrice(price) : <span className="text-gray-400 text-lg">Cargando...</span>}
+        {price !== undefined ? formatPrice(price, cycleDays) : <span className="text-gray-400 text-lg">Cargando...</span>}
       </div>
       <ul className="list-disc px-8 flex flex-col gap-1">
         {list.map((item, i) => (
@@ -110,7 +112,7 @@ function SubscriptionCard({
       </ul>
       <button
         style={{ backgroundColor: theColor }}
-        className="mt-auto mx-auto px-11 py-2.5 text-xl font-bold rounded-full border-4 border-black"
+        className="mt-auto mx-auto px-11 py-2.5 text-xl font-bold rounded-full border-4 border-black hover:brightness-110 hover:scale-105 transition-all duration-200"
         onClick={() => planId !== undefined && onSubscribe(planId)}
         disabled={planId === undefined}
       >
@@ -208,7 +210,7 @@ export default function PlanesSuscripcionPage() {
 
         {/* Radio switch */}
         <div className="flex justify-center gap-4 mb-10">
-          <label className={`cursor-pointer px-6 py-2 rounded-full font-bold transition-colors ${cycleDays === 30 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}`}>
+          <label className={`cursor-pointer px-10 py-3 rounded-full font-bold text-lg transition-all duration-200 ${cycleDays === 30 ? "border-4 border-white text-white" : "text-white"}`}>
             <input
               type="radio"
               name="planCycle"
@@ -219,7 +221,7 @@ export default function PlanesSuscripcionPage() {
             />
             Plan mensual
           </label>
-          <label className={`cursor-pointer px-6 py-2 rounded-full font-bold transition-colors ${cycleDays === 180 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"}`}>
+          <label className={`cursor-pointer px-10 py-3 rounded-full font-bold text-lg transition-all duration-200 ${cycleDays === 180 ? "border-4 border-white text-white" : "text-white"}`}>
             <input
               type="radio"
               name="planCycle"
@@ -245,7 +247,7 @@ export default function PlanesSuscripcionPage() {
                       <div className="text-center py-4 px-2 font-bold text-white text-2xl uppercase" style={{ textShadow: "0 0 2px black" }}>
                         <div>{card.title}</div>
                         {card.subTitle && <div className="text-base">{card.subTitle}</div>}
-                        {plan && <div className="text-lg mt-1">{formatPrice(plan.price)}</div>}
+                        {plan && <div className="text-lg mt-1">{formatPrice(plan.price, cycleDays)}</div>}
                       </div>
                     }
                     body={
@@ -253,7 +255,7 @@ export default function PlanesSuscripcionPage() {
                         <p className="whitespace-pre-wrap font-montserrat">- {card.list.join("\n- ")}</p>
                         <button
                           style={{ backgroundColor: theColor }}
-                          className="w-full rounded-full border-2 border-black font-bold text-white py-2 text-lg"
+                          className="w-full rounded-full border-2 border-black font-bold text-white py-2 text-lg hover:brightness-110 hover:scale-105 transition-all duration-200"
                           onClick={() => plan && handleSubscribe(plan.id)}
                         >
                           Suscribir
@@ -273,6 +275,7 @@ export default function PlanesSuscripcionPage() {
                   {...card}
                   price={plan?.price}
                   planId={plan?.id}
+                  cycleDays={cycleDays}
                   onSubscribe={handleSubscribe}
                 />
               </li>

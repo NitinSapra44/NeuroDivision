@@ -72,6 +72,7 @@ export default function IndividualClientDashboard() {
 
   const managedStudents = students?.managed_students ?? []
   const monitoredStudents = students?.monitored_students ?? []
+  const dynamicSlotsUsed = loading ? slotsUsed : managedStudents.length
 
   return (
     <section className={`relative w-full min-h-screen flex bg-black text-white font-montserrat`}>
@@ -126,7 +127,7 @@ export default function IndividualClientDashboard() {
           {/* REGISTERED STUDENTS */}
           <div className="w-full xl:max-w-6xl 2xl:max-w-[1280px] mt-10 md:mt-12 xl:mt-14 2xl:mt-16">
             <h2 className="text-white font-bold text-2xl md:text-3xl xl:text-4xl 2xl:text-5xl mb-6 md:mb-10 xl:mb-12 text-center">
-              Alumnos registrados ({slotsUsed}/{slotsTotal})
+              Alumnos registrados ({dynamicSlotsUsed}/{slotsTotal})
             </h2>
 
             {loading ? (

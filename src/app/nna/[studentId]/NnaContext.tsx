@@ -29,6 +29,7 @@ export interface NnaContextType {
   metrics: ProgressMetric[]
   permissions: NnaPermissions | null
   dataLoading: boolean
+  refreshMetrics: () => void
 }
 
 export const NnaContext = createContext<NnaContextType>({
@@ -36,6 +37,7 @@ export const NnaContext = createContext<NnaContextType>({
   metrics: [],
   permissions: null,
   dataLoading: true,
+  refreshMetrics: () => {},
 })
 
 export const useNnaContext = () => useContext(NnaContext)

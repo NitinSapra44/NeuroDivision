@@ -14,10 +14,16 @@ function NnaStudentContent() {
   const router = useRouter()
   const params = useParams()
   const studentId = params.studentId as string
-  const { student, metrics, permissions, dataLoading } = useNnaContext()
+  const { student, metrics, permissions, dataLoading, refreshMetrics } = useNnaContext()
 
   const chartRef = useRef<HTMLDivElement>(null)
   const [linePoints, setLinePoints] = useState("")
+
+  // Re-fetch metrics every time this page becomes active (e.g. returning from an activity)
+  useEffect(() => {
+    refreshMetrics()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     const calculate = () => {

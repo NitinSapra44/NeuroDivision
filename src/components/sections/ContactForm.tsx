@@ -25,7 +25,8 @@ export default function ContactForm() {
   }
 
   return (
-    <section className="w-full bg-[#FCCD2A] font-montserrat py-3 px-4 md:px-12 lg:px-24">
+    <section className="w-full bg-[#FCCD2A] font-montserrat py-12 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto">
       <h2 className="text-center font-bold uppercase text-black text-4xl md:text-5xl mb-8">
         Contáctanos
       </h2>
@@ -118,6 +119,7 @@ export default function ContactForm() {
         </button>
 
       </form>
+      </div>
     </section>
   )
 }

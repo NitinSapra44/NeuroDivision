@@ -21,29 +21,31 @@ function NnaLayoutContent({ children }: { children: React.ReactNode }) {
   const [dataLoading, setDataLoading] = useState(true)
   const [loggingOut, setLoggingOut] = useState(false)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data, error } = await supabase.rpc("get_nna_dashboard_overview", {
-          p_nna_user_id: studentId,
-        })
-        if (error) throw error
+  const fetchData = async () => {
+    try {
+      const { data, error } = await supabase.rpc("get_nna_dashboard_overview", {
+        p_nna_user_id: studentId,
+      })
+      if (error) throw error
 
-        if (data?.view_mode === "REDIRECT" && data?.redirect_url) {
-          router.replace(data.redirect_url)
-          return
-        }
-
-        setStudent(data.student)
-        setMetrics(data.progress_metrics ?? [])
-        setPermissions(data.permissions ?? null)
-      } catch (err) {
-        console.error("Failed to load student data:", err)
-      } finally {
-        setDataLoading(false)
+      if (data?.view_mode === "REDIRECT" && data?.redirect_url) {
+        router.replace(data.redirect_url)
+        return
       }
+
+      setStudent(data.student)
+      setMetrics(data.progress_metrics ?? [])
+      setPermissions(data.permissions ?? null)
+    } catch (err) {
+      console.error("Failed to load student data:", err)
+    } finally {
+      setDataLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentId])
 
   const handleLogout = async () => {
@@ -62,7 +64,7 @@ function NnaLayoutContent({ children }: { children: React.ReactNode }) {
   if (dataLoading) return <PageLoader />
 
   return (
-    <NnaContext.Provider value={{ student, metrics, permissions, dataLoading }}>
+    <NnaContext.Provider value={{ student, metrics, permissions, dataLoading, refreshMetrics: fetchData }}>
       <section className="min-h-screen flex flex-col bg-[#F2F2F2] font-montserrat overflow-x-hidden">
         <div className="flex w-full flex-1 flex-col md:flex-row">
 
