@@ -148,7 +148,7 @@ function InstitucionalCard({ onCotizar }: { onCotizar: () => void }) {
       </ul>
       <button
         style={{ backgroundColor: theColor }}
-        className="mt-auto mx-auto px-11 py-2.5 text-xl font-bold rounded-full border-4 border-black"
+        className="mt-auto mx-auto px-11 py-2.5 text-xl font-bold rounded-full border-4 border-black hover:brightness-110 hover:scale-105 transition-all duration-200"
         onClick={onCotizar}
       >
         Cotizar
@@ -210,7 +210,7 @@ export default function PlanesSuscripcionPage() {
 
         {/* Radio switch */}
         <div className="flex justify-center gap-4 mb-10">
-          <label className={`cursor-pointer px-10 py-3 rounded-full font-bold text-lg transition-all duration-200 ${cycleDays === 30 ? "border-4 border-white text-white" : "text-white"}`}>
+          <label className={`cursor-pointer px-10 py-3 rounded-full font-bold text-lg transition-all duration-200 border-4 text-white ${cycleDays === 30 ? "border-white" : "border-transparent"}`}>
             <input
               type="radio"
               name="planCycle"
@@ -221,7 +221,7 @@ export default function PlanesSuscripcionPage() {
             />
             Plan mensual
           </label>
-          <label className={`cursor-pointer px-10 py-3 rounded-full font-bold text-lg transition-all duration-200 ${cycleDays === 180 ? "border-4 border-white text-white" : "text-white"}`}>
+          <label className={`cursor-pointer px-10 py-3 rounded-full font-bold text-lg transition-all duration-200 border-4 text-white ${cycleDays === 180 ? "border-white" : "border-transparent"}`}>
             <input
               type="radio"
               name="planCycle"
@@ -299,7 +299,7 @@ export default function PlanesSuscripcionPage() {
                     </p>
                     <button
                       style={{ backgroundColor: theme.colors.yellow }}
-                      className="w-full rounded-full border-2 border-black font-bold text-white py-2 text-lg"
+                      className="w-full rounded-full border-2 border-black font-bold text-white py-2 text-lg hover:brightness-110 hover:scale-105 transition-all duration-200"
                       onClick={handleCotizar}
                     >
                       Cotizar

@@ -1,11 +1,83 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, Suspense, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
 import Footer from "@/components/sections/Footer"
 import Link from "next/link"
 import comunasData from "@/data/comunas-regiones.json"
+
+function SearchableSelect({
+  options,
+  value,
+  onChange,
+  placeholder,
+  disabled = false,
+}: {
+  options: string[]
+  value: string
+  onChange: (val: string) => void
+  placeholder: string
+  disabled?: boolean
+}) {
+  const [query, setQuery] = useState(value)
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const filtered = query
+    ? options.filter((o) => o.toLowerCase().includes(query.toLowerCase()))
+    : options
+
+  // Sync display when value resets externally
+  useEffect(() => {
+    setQuery(value)
+  }, [value])
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+        // If user typed something that doesn't match the current value, reset display
+        if (!options.includes(query)) setQuery(value)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [query, value, options])
+
+  const select = (opt: string) => {
+    onChange(opt)
+    setQuery(opt)
+    setOpen(false)
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        type="text"
+        value={query}
+        disabled={disabled}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder}
+        className="w-full border-2 border-gray-300 rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-gray-500 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+      />
+      {open && !disabled && filtered.length > 0 && (
+        <ul className="absolute z-50 left-0 right-0 mt-1 max-h-52 overflow-y-auto bg-white border-2 border-gray-300 rounded-2xl shadow-lg text-sm">
+          {filtered.map((opt) => (
+            <li
+              key={opt}
+              onMouseDown={() => select(opt)}
+              className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${opt === value ? "font-semibold" : ""}`}
+            >
+              {opt}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 type PlanData = {
   id: number
@@ -170,40 +242,30 @@ function CheckoutPage() {
                   <div>
                     <label className="text-sm font-semibold mb-1 block">Región</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
                       </span>
-                      <select
+                      <SearchableSelect
+                        options={comunasData.regiones.map((r) => r.region)}
                         value={region}
-                        onChange={(e) => { setRegion(e.target.value); setComuna("") }}
-                        className="w-full border-2 border-gray-300 rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-gray-500 bg-white appearance-none"
-                      >
-                        <option value="">Selecciona una región</option>
-                        {comunasData.regiones.map((r) => (
-                          <option key={r.region} value={r.region}>{r.region}</option>
-                        ))}
-                      </select>
+                        onChange={(val) => { setRegion(val); setComuna("") }}
+                        placeholder="Selecciona una región"
+                      />
                     </div>
                   </div>
                   <div>
                     <label className="text-sm font-semibold mb-1 block">Comuna</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
                       </span>
-                      <select
+                      <SearchableSelect
+                        options={comunasData.regiones.find((r) => r.region === region)?.comunas ?? []}
                         value={comuna}
-                        onChange={(e) => setComuna(e.target.value)}
+                        onChange={setComuna}
+                        placeholder="Selecciona una comuna"
                         disabled={!region}
-                        className="w-full border-2 border-gray-300 rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-gray-500 bg-white appearance-none disabled:opacity-50"
-                      >
-                        <option value="">Selecciona una comuna</option>
-                        {comunasData.regiones
-                          .find((r) => r.region === region)
-                          ?.comunas.map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                      </select>
+                      />
                     </div>
                   </div>
                   <div className="sm:col-span-2">

@@ -149,6 +149,10 @@ body {
   height: 100%;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Import from Google Fonts */
 
 

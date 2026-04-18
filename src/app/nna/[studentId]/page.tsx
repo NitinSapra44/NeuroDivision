@@ -41,9 +41,13 @@ function NnaStudentContent() {
       }).join(" ")
       setLinePoints(pts)
     }
-    calculate()
+    // Delay to let CSS bar-height transitions (~150ms) finish before reading positions
+    const timer = setTimeout(calculate, 300)
     window.addEventListener("resize", calculate)
-    return () => window.removeEventListener("resize", calculate)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener("resize", calculate)
+    }
   }, [metrics])
 
   if (dataLoading) return <PageLoader inline bg="bg-[#F2F2F2]" />
