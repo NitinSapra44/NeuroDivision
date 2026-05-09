@@ -18,9 +18,8 @@ interface Subscription {
   id: string
   plan_name: string
   status: string
-  next_payment_date: string
   price: string
-  payment_method: string
+  slots: number | string
 }
 
 function EditIcon() {
@@ -207,10 +206,9 @@ function PerfilContent() {
                         <span className="text-gray-600 text-sm whitespace-nowrap">Estado: {sub.status}</span>
                       </div>
                       <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="text-gray-600 text-sm">Próximo pago: {sub.next_payment_date}</span>
+                        <span className="text-gray-600 text-sm">Cupos: {sub.slots}</span>
                         <span className="text-gray-600 text-sm font-semibold">Precio: {sub.price}</span>
                       </div>
-                      <p className="text-gray-600 text-sm">Medio de pago vinculado: {sub.payment_method}</p>
                       <div className="flex items-center justify-between pt-2 gap-3">
                         <button
                           onClick={() => setCardModalOpen(true)}

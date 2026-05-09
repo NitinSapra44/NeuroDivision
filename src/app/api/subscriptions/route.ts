@@ -2,30 +2,6 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
-function mapTarjeta(paymentMethodId: string): string {
-  if (!paymentMethodId) return "-"
-  const t = paymentMethodId.toLowerCase()
-  if (t.includes("visa")) return "Visa"
-  if (t.includes("master")) return "Master"
-  return paymentMethodId
-}
-
-function mapStatus(status: string): string {
-  if (status === "authorized") return "Activa"
-  if (status === "paused") return "Pausada"
-  if (status === "cancelled") return "Cancelada"
-  return status ?? "Inactiva"
-}
-
-function formatDate(dateStr: string): string {
-  if (!dateStr) return "-"
-  return new Date(dateStr).toLocaleDateString("es-CL", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  })
-}
-
 export async function GET() {
   const cookieStore = await cookies()
 
@@ -51,55 +27,53 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  // Get the MercadoPago customer ID for this user
-  const { data: responsibleUser, error: userDbError } = await supabase
-    .from("responsible_user")
-    .select("mp_customer_id")
-    .eq("id", user.id)
-    .single()
+  const { data, error } = await supabase
+    .from("subscription")
+    .select(
+      `
+      id,
+      is_active,
+      effective_max_nna_allowed,
+      subscription_plan!suscription_plan_id (
+        id,
+        name,
+        price,
+        duration_days,
+        plan_group
+      )
+    `
+    )
+    .eq("responsible_user", user.id)
+    .eq("is_active", true)
 
-  if (userDbError || !responsibleUser?.mp_customer_id) {
+  if (error) {
+    console.error("Error fetching subscriptions:", error)
     return NextResponse.json([], { status: 200 })
   }
 
-  const mpCustomerId = responsibleUser.mp_customer_id
-  const mpAccessToken = process.env.MP_ACCESS_TOKEN
+  const subscriptions = (data ?? []).map((sub: any) => {
+    const plan = sub.subscription_plan
+    const durationLabel =
+      plan?.duration_days === 180
+        ? "Semestral"
+        : plan?.duration_days === 30
+        ? "Mensual"
+        : plan?.duration_days
+        ? `${plan.duration_days} días`
+        : ""
 
-  if (!mpAccessToken) {
-    console.error("MP_ACCESS_TOKEN is not set")
-    return NextResponse.json([], { status: 200 })
-  }
-
-  // Search MercadoPago preapprovals (subscriptions) by payer ID
-  const mpRes = await fetch(
-    `https://api.mercadopago.com/preapproval/search?payer_id=${mpCustomerId}&status=authorized`,
-    {
-      headers: {
-        Authorization: `Bearer ${mpAccessToken}`,
-      },
-      cache: "no-store",
-    }
-  )
-
-  if (!mpRes.ok) {
-    console.error("MercadoPago API error:", mpRes.status, await mpRes.text())
-    return NextResponse.json([], { status: 200 })
-  }
-
-  const mpData = await mpRes.json()
-  const results: any[] = mpData.results ?? []
-
-  const subscriptions = results.map((sub) => ({
-    id: sub.id,
-    plan_name: sub.reason ?? "Plan",
-    status: mapStatus(sub.status),
-    next_payment_date: formatDate(sub.next_payment_date),
-    price:
-      sub.auto_recurring?.transaction_amount != null
-        ? `$${Number(sub.auto_recurring.transaction_amount).toLocaleString("es-CL")}`
+    return {
+      id: String(sub.id),
+      plan_name: plan?.name
+        ? `${plan.name}${durationLabel ? ` (${durationLabel})` : ""}`
+        : "Plan",
+      status: sub.is_active ? "Activa" : "Inactiva",
+      price: plan?.price != null
+        ? `$${Number(plan.price).toLocaleString("es-CL")}`
         : "-",
-    payment_method: mapTarjeta(sub.payment_method_id ?? ""),
-  }))
+      slots: sub.effective_max_nna_allowed ?? "-",
+    }
+  })
 
   return NextResponse.json(subscriptions)
 }
