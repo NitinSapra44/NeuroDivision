@@ -19,7 +19,8 @@ interface Subscription {
   plan_name: string
   status: string
   price: string
-  slots: number | string
+  proximo_cobro: string
+  tarjeta: string
 }
 
 function EditIcon() {
@@ -32,6 +33,37 @@ function EditIcon() {
         d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 2.828L11.828 15.828a4 4 0 01-1.414.828l-3.414 1.414 1.414-3.414A4 4 0 019 13z"
       />
     </svg>
+  )
+}
+
+function CardBadge({ tarjeta }: { tarjeta: string }) {
+  const lower = tarjeta.toLowerCase()
+  const isVisa = lower.includes("visa")
+  const isMaster = lower.includes("master")
+
+  return (
+    <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl">
+      {isVisa && (
+        <div className="w-10 h-6 bg-blue-700 rounded flex items-center justify-center shrink-0">
+          <span className="text-white text-[9px] font-extrabold tracking-tight">VISA</span>
+        </div>
+      )}
+      {isMaster && (
+        <div className="w-10 h-6 rounded overflow-hidden flex shrink-0">
+          <div className="w-1/2 h-full bg-red-600" />
+          <div className="w-1/2 h-full bg-orange-400" />
+        </div>
+      )}
+      {!isVisa && !isMaster && (
+        <div className="w-10 h-6 bg-gray-400 rounded flex items-center justify-center shrink-0">
+          <span className="text-white text-[8px] font-bold">CARD</span>
+        </div>
+      )}
+      <div className="flex flex-col min-w-0">
+        <span className="text-xs font-bold text-black leading-tight">{tarjeta}</span>
+        <span className="text-[10px] text-gray-500 leading-tight">Medio de pago vinculado</span>
+      </div>
+    </div>
   )
 }
 
@@ -206,9 +238,12 @@ function PerfilContent() {
                         <span className="text-gray-600 text-sm whitespace-nowrap">Estado: {sub.status}</span>
                       </div>
                       <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="text-gray-600 text-sm">Cupos: {sub.slots}</span>
+                        <span className="text-gray-600 text-sm">Próximo pago: {sub.proximo_cobro}</span>
                         <span className="text-gray-600 text-sm font-semibold">Precio: {sub.price}</span>
                       </div>
+                      {sub.tarjeta && sub.tarjeta !== "-" && (
+                        <CardBadge tarjeta={sub.tarjeta} />
+                      )}
                       <div className="flex items-center justify-between pt-2 gap-3">
                         <button
                           onClick={() => setCardModalOpen(true)}

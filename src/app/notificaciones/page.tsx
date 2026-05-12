@@ -18,11 +18,13 @@ interface Notification {
 }
 
 const typeLabels: Record<string, string> = {
-  ALERTA_PAGO: "Alerta",
+  ALERTA_PAGO: "Alerta de pago",
   REFUERZO_POSITIVO: "Recomendación",
   DIAGNOSTICO: "Diagnóstico",
   SUSCRIPCION: "Suscripción",
   AVISO: "Aviso",
+  SISTEMA: "Sistema",
+  MOTIVACION: "Motivación",
 }
 
 function getTimeAgo(dateStr: string): string {
@@ -41,7 +43,7 @@ function getTimeAgo(dateStr: string): string {
 type Filter = "all" | "unread"
 
 function NotificacionesContent() {
-  const [filter, setFilter] = useState<Filter>("unread")
+  const [filter, setFilter] = useState<Filter>("all")
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedNotif, setSelectedNotif] = useState<Notification | null>(null)
@@ -79,9 +81,14 @@ function NotificacionesContent() {
     setSelectedNotif(notif)
     if (!notif.is_read) {
       await supabase.from("notification").update({ is_read: true }).eq("id", notif.id)
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
-      )
+      if (filter === "unread") {
+        // Remove immediately from the unread list
+        setNotifications((prev) => prev.filter((n) => n.id !== notif.id))
+      } else {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
+        )
+      }
     }
   }
 
