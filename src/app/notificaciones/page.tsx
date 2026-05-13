@@ -82,8 +82,8 @@ function NotificacionesContent() {
     if (!notif.is_read) {
       await supabase.from("notification").update({ is_read: true }).eq("id", notif.id)
       if (filter === "unread") {
-        // Remove immediately from the unread list
-        setNotifications((prev) => prev.filter((n) => n.id !== notif.id))
+        // Switch to "all" so the now-read notification is visible there
+        setFilter("all")
       } else {
         setNotifications((prev) =>
           prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))

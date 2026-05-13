@@ -37,32 +37,49 @@ function EditIcon() {
 }
 
 function CardBadge({ tarjeta }: { tarjeta: string }) {
-  const lower = tarjeta.toLowerCase()
+  const hasCard = tarjeta && tarjeta !== "-"
+  const lower = (tarjeta ?? "").toLowerCase()
   const isVisa = lower.includes("visa")
   const isMaster = lower.includes("master")
 
   return (
     <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl">
-      {isVisa && (
-        <div className="w-10 h-6 bg-blue-700 rounded flex items-center justify-center shrink-0">
-          <span className="text-white text-[9px] font-extrabold tracking-tight">VISA</span>
-        </div>
+      {hasCard ? (
+        <>
+          {isVisa && (
+            <div className="w-10 h-6 bg-blue-700 rounded flex items-center justify-center shrink-0">
+              <span className="text-white text-[9px] font-extrabold tracking-tight">VISA</span>
+            </div>
+          )}
+          {isMaster && (
+            <div className="w-10 h-6 rounded overflow-hidden flex shrink-0">
+              <div className="w-1/2 h-full bg-red-600" />
+              <div className="w-1/2 h-full bg-orange-400" />
+            </div>
+          )}
+          {!isVisa && !isMaster && (
+            <div className="w-10 h-6 bg-gray-500 rounded flex items-center justify-center shrink-0">
+              <span className="text-white text-[8px] font-bold">CARD</span>
+            </div>
+          )}
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-bold text-black leading-tight">{tarjeta}</span>
+            <span className="text-[10px] text-gray-500 leading-tight">Medio de pago vinculado</span>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="w-10 h-6 bg-gray-200 rounded flex items-center justify-center shrink-0">
+            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs font-bold text-gray-400 leading-tight">Sin tarjeta vinculada</span>
+            <span className="text-[10px] text-gray-400 leading-tight">Medio de pago vinculado</span>
+          </div>
+        </>
       )}
-      {isMaster && (
-        <div className="w-10 h-6 rounded overflow-hidden flex shrink-0">
-          <div className="w-1/2 h-full bg-red-600" />
-          <div className="w-1/2 h-full bg-orange-400" />
-        </div>
-      )}
-      {!isVisa && !isMaster && (
-        <div className="w-10 h-6 bg-gray-400 rounded flex items-center justify-center shrink-0">
-          <span className="text-white text-[8px] font-bold">CARD</span>
-        </div>
-      )}
-      <div className="flex flex-col min-w-0">
-        <span className="text-xs font-bold text-black leading-tight">{tarjeta}</span>
-        <span className="text-[10px] text-gray-500 leading-tight">Medio de pago vinculado</span>
-      </div>
     </div>
   )
 }
@@ -241,9 +258,7 @@ function PerfilContent() {
                         <span className="text-gray-600 text-sm">Próximo pago: {sub.proximo_cobro}</span>
                         <span className="text-gray-600 text-sm font-semibold">Precio: {sub.price}</span>
                       </div>
-                      {sub.tarjeta && sub.tarjeta !== "-" && (
-                        <CardBadge tarjeta={sub.tarjeta} />
-                      )}
+                      <CardBadge tarjeta={sub.tarjeta} />
                       <div className="flex items-center justify-between pt-2 gap-3">
                         <button
                           onClick={() => setCardModalOpen(true)}
