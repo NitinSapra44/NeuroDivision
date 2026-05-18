@@ -21,6 +21,9 @@ interface Subscription {
   price: string
   proximo_cobro: string
   tarjeta: string
+  ultimo_cobro: string
+  ultimo_monto: string
+  semaphore: string
 }
 
 function EditIcon() {
@@ -40,7 +43,7 @@ function CardBadge({ tarjeta }: { tarjeta: string }) {
   const hasCard = tarjeta && tarjeta !== "-"
   const lower = (tarjeta ?? "").toLowerCase()
   const isVisa = lower.includes("visa")
-  const isMaster = lower.includes("master")
+  const isMaster = lower.includes("master") || lower.includes("mastercard")
 
   return (
     <div className="flex items-center gap-2 py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl">
@@ -114,9 +117,11 @@ function PerfilContent() {
 
   // Card modal
   const [cardModalOpen, setCardModalOpen] = useState(false)
+  const [cardModalSub, setCardModalSub] = useState<Subscription | null>(null)
 
   // Cancel plan modal
   const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const [cancelModalSub, setCancelModalSub] = useState<Subscription | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -252,23 +257,37 @@ function PerfilContent() {
                     <div key={sub.id} className="border border-gray-100 rounded-xl p-4 space-y-1.5">
                       <div className="flex items-start justify-between gap-2 flex-wrap">
                         <span className="font-bold text-black text-sm">{sub.plan_name}</span>
-                        <span className="text-gray-600 text-sm whitespace-nowrap">Estado: {sub.status}</span>
+                        <span className="flex items-center gap-1.5">
+                          {sub.semaphore && (
+                            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                              sub.semaphore === "green" ? "bg-green-500" :
+                              sub.semaphore === "yellow" ? "bg-yellow-400" : "bg-red-500"
+                            }`} title={sub.semaphore === "green" ? "Pagos al día" : sub.semaphore === "yellow" ? "Atención requerida" : "Pago fallido"} />
+                          )}
+                          <span className="text-gray-600 text-sm whitespace-nowrap">Estado: {sub.status}</span>
+                        </span>
                       </div>
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <span className="text-gray-600 text-sm">Próximo pago: {sub.proximo_cobro}</span>
                         <span className="text-gray-600 text-sm font-semibold">Precio: {sub.price}</span>
                       </div>
+                      {sub.ultimo_cobro && sub.ultimo_cobro !== "-" && (
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-gray-500 text-xs">Último cobro: {sub.ultimo_cobro}</span>
+                          <span className="text-gray-500 text-xs">{sub.ultimo_monto}</span>
+                        </div>
+                      )}
                       <CardBadge tarjeta={sub.tarjeta} />
                       <div className="flex items-center justify-between pt-2 gap-3">
                         <button
-                          onClick={() => setCardModalOpen(true)}
+                          onClick={() => { setCardModalSub(sub); setCardModalOpen(true) }}
                           className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition"
                         >
                           Cambiar tarjeta
                           <EditIcon />
                         </button>
                         <button
-                          onClick={() => setCancelModalOpen(true)}
+                          onClick={() => { setCancelModalSub(sub); setCancelModalOpen(true) }}
                           className="text-sm font-semibold text-[#ED3237] hover:underline transition"
                         >
                           Cancelar plan
@@ -370,9 +389,9 @@ function PerfilContent() {
       <Modal
         open={cardModalOpen}
         title="Cambiar tarjeta"
-        onClose={() => setCardModalOpen(false)}
+        onClose={() => { setCardModalOpen(false); setCardModalSub(null) }}
       >
-        <CheckoutSuscripcion />
+        <CheckoutSuscripcion currentCard={cardModalSub?.tarjeta} />
       </Modal>
 
       {/* ====== CANCELAR PLAN MODAL ====== */}
@@ -399,7 +418,7 @@ function PerfilContent() {
           <h3 className="text-xl font-extrabold text-black">¡Te vamos a extrañar!</h3>
           <p className="text-base font-bold text-black">
             ¿Estás seguro de cancelar <br />
-            <span className="text-[#ED3237]">"Plan particular"</span>?
+            <span className="text-[#ED3237]">"{cancelModalSub?.plan_name ?? "Plan particular"}"</span>?
           </p>
           <p className="text-sm text-gray-600 leading-relaxed">
             Si cancelas ahora, no se te harán más cobros en tu tarjeta. Podrás seguir disfrutando de los beneficios de tu plan hasta el final del ciclo de facturación actual.

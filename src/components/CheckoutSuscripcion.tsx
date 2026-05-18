@@ -6,7 +6,7 @@ import { Eye, EyeOff } from "lucide-react"
 const inputClass =
   "w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm font-medium bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
 
-export default function CheckoutSuscripcion() {
+export default function CheckoutSuscripcion({ currentCard }: { currentCard?: string }) {
   const [cardNumber, setCardNumber] = useState("")
   const [cardHolder, setCardHolder] = useState("")
   const [expiry, setExpiry] = useState("")
@@ -28,6 +28,20 @@ export default function CheckoutSuscripcion() {
 
   return (
     <div className="space-y-3">
+      {/* Current card banner */}
+      {currentCard && currentCard !== "-" && (
+        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          <div>
+            <p className="text-[10px] text-gray-400 leading-none">Tarjeta actual</p>
+            <p className="text-xs font-bold text-black">{currentCard}</p>
+          </div>
+          <span className="ml-auto text-[10px] text-gray-400">Ingresa nueva tarjeta abajo</span>
+        </div>
+      )}
+
       {/* Card brand logos */}
       <div className="flex items-center gap-2 mb-1">
         <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">

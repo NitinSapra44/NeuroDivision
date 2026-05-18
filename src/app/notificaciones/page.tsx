@@ -43,7 +43,7 @@ function getTimeAgo(dateStr: string): string {
 type Filter = "all" | "unread"
 
 function NotificacionesContent() {
-  const [filter, setFilter] = useState<Filter>("all")
+  const [filter, setFilter] = useState<Filter>("unread")
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedNotif, setSelectedNotif] = useState<Notification | null>(null)
