@@ -110,10 +110,18 @@ function NnaLayoutContent({ children }: { children: React.ReactNode }) {
             >
               <Home className="w-12 h-12 text-black" />
             </button>
-            <button className="opacity-40 cursor-not-allowed" title="Notificaciones (próximamente)" disabled>
+            <button
+              onClick={() => router.push("/notificaciones")}
+              className="hover:scale-110 active:scale-95 transition-all duration-200"
+              title="Notificaciones"
+            >
               <Bell className="w-12 h-12 text-black" />
             </button>
-            <button className="opacity-40 cursor-not-allowed" title="Opciones de usuario (próximamente)" disabled>
+            <button
+              onClick={() => router.push("/perfil")}
+              className="hover:scale-110 active:scale-95 transition-all duration-200"
+              title="Perfil"
+            >
               <User className="w-12 h-12 text-black" />
             </button>
             <button
@@ -133,10 +141,10 @@ function NnaLayoutContent({ children }: { children: React.ReactNode }) {
           <button onClick={() => router.push("/dashboard")} className="hover:scale-110 transition-transform">
             <Home className="w-6 h-6 text-black" />
           </button>
-          <button disabled className="opacity-40 cursor-not-allowed">
+          <button onClick={() => router.push("/notificaciones")} className="hover:scale-110 transition-transform">
             <Bell className="w-6 h-6 text-black" />
           </button>
-          <button disabled className="opacity-40 cursor-not-allowed">
+          <button onClick={() => router.push("/perfil")} className="hover:scale-110 transition-transform">
             <User className="w-6 h-6 text-black" />
           </button>
           <button
