@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client"
 import Footer from "@/components/sections/Footer"
 import Link from "next/link"
 import comunasData from "@/data/comunas-regiones.json"
+import CheckoutSuscripcion from "@/components/CheckoutSuscripcion"
 
 function SearchableSelect({
   options,
@@ -110,15 +111,6 @@ function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Payment fields
-  const [cardNumber, setCardNumber] = useState("")
-  const [cardExpiry, setCardExpiry] = useState("")
-  const [cardCvv, setCardCvv] = useState("")
-  const [cardName, setCardName] = useState("")
-  const [docType, setDocType] = useState("RUT")
-  const [docNumber, setDocNumber] = useState("")
-  const [payEmail, setPayEmail] = useState("")
-
   // Load plan from DB
   useEffect(() => {
     if (!planId) {
@@ -161,8 +153,7 @@ function CheckoutPage() {
     ? `${plan.name} (Plan ${plan.duration_days === 30 ? "mensual" : "6 meses"})`
     : ""
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleMPSubmit = async (formData: any) => {
     setError(null)
 
     if (!street.trim()) { setError("Por favor ingrese la calle y número"); return }
@@ -173,8 +164,24 @@ function CheckoutPage() {
 
     setSubmitting(true)
     try {
-      // TODO: Integrate with MercadoPago using plan.mp_preapproval_plan_id
-      // For now, redirect to success page
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
+
+      const res = await fetch("/api/suscripciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: formData.token,
+          plan_id: plan?.mp_preapproval_plan_id,
+          payer_email: user?.email,
+          shipping: { street, apt, region, comuna, phone },
+          user_id: user?.id,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Error al procesar el pago")
+
       router.push("/checkout/success")
     } catch (err: any) {
       setError(err.message || "Error al procesar el pago")
@@ -199,7 +206,7 @@ function CheckoutPage() {
             Finalizar Compra
           </h1>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6">
             <div className="flex flex-col lg:flex-row gap-6">
             {/* ===== LEFT COLUMN ===== */}
             <div className="flex-1 flex flex-col gap-6">
@@ -306,123 +313,11 @@ function CheckoutPage() {
 
               <section className="bg-white rounded-2xl p-6">
                 <h2 className="font-bold text-lg mb-4">2.- Método de pago</h2>
-
-                {/* MP card form */}
-                <div className="border border-gray-200 rounded-xl p-5 bg-white shadow-sm">
-                  {/* Header row */}
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-sm font-semibold text-gray-700">Tarjeta de crédito o débito</p>
-                    <div className="flex gap-1.5 items-center">
-                      {/* VISA */}
-                      <div className="w-10 h-6 rounded border border-gray-200 bg-white flex items-center justify-center">
-                        <span className="text-[10px] font-extrabold text-blue-700 tracking-tighter">VISA</span>
-                      </div>
-                      {/* Mastercard */}
-                      <div className="w-10 h-6 rounded border border-gray-200 bg-white flex items-center justify-center gap-0.5">
-                        <span className="w-3.5 h-3.5 rounded-full bg-red-500 opacity-90 block" />
-                        <span className="w-3.5 h-3.5 rounded-full bg-yellow-400 opacity-90 block -ml-1.5" />
-                      </div>
-                      {/* MP */}
-                      <div className="w-10 h-6 rounded border border-gray-200 bg-[#009EE3] flex items-center justify-center">
-                        <span className="text-[9px] font-extrabold text-white tracking-tight">MP</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {/* Card number */}
-                    <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Número de tarjeta</label>
-                      <input
-                        type="text"
-                        value={cardNumber}
-                        onChange={(e) => {
-                          const val = e.target.value.replace(/\D/g, "").slice(0, 16)
-                          setCardNumber(val.replace(/(.{4})/g, "$1 ").trim())
-                        }}
-                        placeholder="1234 1234 1234 1234"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                      />
-                    </div>
-
-                    {/* Expiry + CVV */}
-                    <div className="flex gap-3">
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-500 mb-1 block">Vencimiento</label>
-                        <input
-                          type="text"
-                          value={cardExpiry}
-                          onChange={(e) => {
-                            let val = e.target.value.replace(/\D/g, "").slice(0, 4)
-                            if (val.length >= 3) val = val.slice(0, 2) + "/" + val.slice(2)
-                            setCardExpiry(val)
-                          }}
-                          placeholder="MM/AA"
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-500 mb-1 block">Código de seguridad</label>
-                        <input
-                          type="text"
-                          value={cardCvv}
-                          onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                          placeholder="Ej: 123"
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Cardholder name */}
-                    <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Nombre del titular como aparece en la tarjeta</label>
-                      <input
-                        type="text"
-                        value={cardName}
-                        onChange={(e) => setCardName(e.target.value)}
-                        placeholder="María López"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                      />
-                    </div>
-
-                    {/* Document */}
-                    <div>
-                      <label className="text-xs text-gray-500 mb-1 block">Documento del titular</label>
-                      <div className="flex gap-2">
-                        <select
-                          value={docType}
-                          onChange={(e) => setDocType(e.target.value)}
-                          className="border border-gray-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-blue-400 bg-white"
-                        >
-                          <option value="RUT">RUT</option>
-                          <option value="DNI">DNI</option>
-                          <option value="PASAPORTE">Pasaporte</option>
-                        </select>
-                        <input
-                          type="text"
-                          value={docNumber}
-                          onChange={(e) => setDocNumber(e.target.value)}
-                          placeholder="999999999"
-                          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Email */}
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700 mt-2 mb-2">Completa tu información</p>
-                      <label className="text-xs text-gray-500 mb-1 block">E-mail</label>
-                      <input
-                        type="email"
-                        value={payEmail}
-                        onChange={(e) => setPayEmail(e.target.value)}
-                        placeholder="ejemplo@email.com"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                      />
-                    </div>
-
-                  </div>
-                </div>
+                <CheckoutSuscripcion
+                  planId={plan?.mp_preapproval_plan_id ?? ""}
+                  monto={total}
+                  onSubmit={handleMPSubmit}
+                />
               </section>
 
               {error && (
@@ -495,20 +390,7 @@ function CheckoutPage() {
             </div>
             </div>
 
-            {/* ===== CENTERED PAY BUTTON ===== */}
-            <div className="flex flex-col lg:flex-row gap-6">
-              <div className="flex-1">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-[#ED3237] text-white font-bold rounded-full py-3 text-lg border-4 border-black hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting ? "Procesando..." : "Pagar ahora"}
-                </button>
-              </div>
-              <div className="w-full lg:w-96 shrink-0" />
-            </div>
-          </form>
+          </div>
         </div>
       </div>
       <Footer />

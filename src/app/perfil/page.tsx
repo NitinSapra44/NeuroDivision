@@ -6,7 +6,6 @@ import { Mail, Lock, User, Eye, EyeOff, X } from "lucide-react"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
 import SideMenu from "@/components/ui/SideMenu"
 import Modal from "@/components/ui/Modal"
-import CheckoutSuscripcion from "@/components/CheckoutSuscripcion"
 import { supabase } from "@/lib/supabase/client"
 
 const inputClass =
@@ -391,7 +390,10 @@ function PerfilContent() {
         title="Cambiar tarjeta"
         onClose={() => { setCardModalOpen(false); setCardModalSub(null) }}
       >
-        <CheckoutSuscripcion currentCard={cardModalSub?.tarjeta} />
+        <p className="text-sm text-gray-500 text-center py-4">
+          Para cambiar tu tarjeta, cancela tu plan actual y suscríbete nuevamente desde{" "}
+          <a href="/planes-suscripcion" className="text-[#ED3237] font-semibold underline">Planes de suscripción</a>.
+        </p>
       </Modal>
 
       {/* ====== CANCELAR PLAN MODAL ====== */}
