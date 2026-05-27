@@ -6,6 +6,7 @@ import { Mail, Lock, User, Eye, EyeOff, X } from "lucide-react"
 import ProtectedRoute from "@/components/auth/ProtectedRoute"
 import SideMenu from "@/components/ui/SideMenu"
 import Modal from "@/components/ui/Modal"
+import CheckoutSuscripcion from "@/components/CheckoutSuscripcion"
 import { supabase } from "@/lib/supabase/client"
 
 const inputClass =
@@ -15,9 +16,11 @@ const btnPrimary =
 
 interface Subscription {
   id: string
+  mp_subscription_id: string | null
   plan_name: string
   status: string
   price: string
+  monto: number
   proximo_cobro: string
   tarjeta: string
   ultimo_cobro: string
@@ -117,6 +120,8 @@ function PerfilContent() {
   // Card modal
   const [cardModalOpen, setCardModalOpen] = useState(false)
   const [cardModalSub, setCardModalSub] = useState<Subscription | null>(null)
+  const [cardUpdateError, setCardUpdateError] = useState<string | null>(null)
+  const [cardUpdating, setCardUpdating] = useState(false)
 
   // Cancel plan modal
   const [cancelModalOpen, setCancelModalOpen] = useState(false)
@@ -152,6 +157,38 @@ function PerfilContent() {
   const showSuccess = (msg: string) => {
     setSuccessMessage(msg)
     setTimeout(() => setSuccessMessage(null), 4000)
+  }
+
+  const handleCardUpdate = async (formData: any) => {
+    setCardUpdateError(null)
+    setCardUpdating(true)
+    try {
+      const res = await fetch("/api/suscripciones", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mp_subscription_id: cardModalSub?.mp_subscription_id,
+          token: formData.token,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Error al cambiar la tarjeta")
+
+      setCardModalOpen(false)
+      setCardModalSub(null)
+      showSuccess("¡Tarjeta actualizada correctamente!")
+
+      // Refresh subscriptions list
+      const res2 = await fetch("/api/subscriptions")
+      if (res2.ok) {
+        const d = await res2.json()
+        setSubscriptions(Array.isArray(d) ? d : [])
+      }
+    } catch (err: any) {
+      setCardUpdateError(err.message || "Error al cambiar la tarjeta")
+    } finally {
+      setCardUpdating(false)
+    }
   }
 
   const handleSaveName = async () => {
@@ -388,12 +425,29 @@ function PerfilContent() {
       <Modal
         open={cardModalOpen}
         title="Cambiar tarjeta"
-        onClose={() => { setCardModalOpen(false); setCardModalSub(null) }}
+        onClose={() => { setCardModalOpen(false); setCardModalSub(null); setCardUpdateError(null) }}
       >
-        <p className="text-sm text-gray-500 text-center py-4">
-          Para cambiar tu tarjeta, cancela tu plan actual y suscríbete nuevamente desde{" "}
-          <a href="/planes-suscripcion" className="text-[#ED3237] font-semibold underline">Planes de suscripción</a>.
-        </p>
+        {cardModalSub && (
+          <div>
+            <p className="text-sm text-gray-500 mb-4 text-center">
+              Ingresa tu nueva tarjeta para el plan <strong>{cardModalSub.plan_name}</strong>.
+              Tu suscripción seguirá activa.
+            </p>
+            {cardUpdateError && (
+              <div className="mb-3 bg-red-50 border border-red-300 text-red-700 rounded-xl px-4 py-2 text-sm font-semibold">
+                {cardUpdateError}
+              </div>
+            )}
+            {cardUpdating && (
+              <p className="text-center text-sm text-gray-400 mb-2">Actualizando tarjeta...</p>
+            )}
+            <CheckoutSuscripcion
+              planId={cardModalSub.mp_subscription_id ?? cardModalSub.id}
+              monto={cardModalSub.monto}
+              onSubmit={handleCardUpdate}
+            />
+          </div>
+        )}
       </Modal>
 
       {/* ====== CANCELAR PLAN MODAL ====== */}

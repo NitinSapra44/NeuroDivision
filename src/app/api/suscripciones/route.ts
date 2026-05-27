@@ -87,6 +87,38 @@ export const POST = withAuth(async (request: Request, user: any, supabase: any) 
   }
 });
 
+export const PATCH = withAuth(async (request: Request, user: any, supabase: any) => {
+  try {
+    const body = await request.json();
+    const { mp_subscription_id, token } = body;
+
+    if (!mp_subscription_id || !token) {
+      return NextResponse.json(
+        { error: 'Faltan datos: mp_subscription_id y token son requeridos' },
+        { status: 400 }
+      );
+    }
+
+    const preapproval = new PreApproval(client);
+
+    const mpResponse = await preapproval.update({
+      id: mp_subscription_id,
+      body: { card_token_id: token },
+    });
+
+    console.log(`=== TARJETA ACTUALIZADA: ${mpResponse.id} - Estado: ${mpResponse.status} ===`);
+
+    return NextResponse.json({ success: true, status: mpResponse.status }, { status: 200 });
+
+  } catch (error: any) {
+    console.error("ERROR AL ACTUALIZAR TARJETA:", error);
+    return NextResponse.json(
+      { error: error.message || 'No se pudo actualizar la tarjeta' },
+      { status: 500 }
+    );
+  }
+});
+
 export const GET = withAuth(async (request: Request, user: any, supabase: any) => {
   try {
     const { data: dbSubscriptions, error } = await supabase

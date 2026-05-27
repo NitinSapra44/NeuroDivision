@@ -129,9 +129,11 @@ export async function GET() {
 
       return {
         id: String(sub.id),
+        mp_subscription_id: sub.mp_subscription_id ?? null,
         plan_name: plan?.name ? `${plan.name} (${durationLabel})` : "Plan",
         status,
         price: plan?.price != null ? `$${Number(plan.price).toLocaleString("es-CL")}` : "-",
+        monto: plan?.price != null ? Number(plan.price) : 0,
         proximo_cobro: proximoCobro,
         tarjeta,
         ultimo_cobro,
