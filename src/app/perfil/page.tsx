@@ -144,7 +144,7 @@ function PerfilContent() {
       setName(userData?.name ?? "")
       setLoadingName(false)
 
-      const res = await fetch("/api/subscriptions")
+      const res = await fetch("/api/suscripciones")
       if (res.ok) {
         const data = await res.json()
         setSubscriptions(Array.isArray(data) ? data : [])
@@ -179,7 +179,7 @@ function PerfilContent() {
       showSuccess("¡Tarjeta actualizada correctamente!")
 
       // Refresh subscriptions list
-      const res2 = await fetch("/api/subscriptions")
+      const res2 = await fetch("/api/suscripciones")
       if (res2.ok) {
         const d = await res2.json()
         setSubscriptions(Array.isArray(d) ? d : [])

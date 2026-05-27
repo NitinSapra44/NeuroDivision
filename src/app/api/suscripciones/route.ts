@@ -7,6 +7,30 @@ const client = new MercadoPagoConfig({
   options: { timeout: 5000 }
 });
 
+function formatDate(date: Date): string {
+  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(date.getUTCDate()).padStart(2, '0');
+  const yyyy = date.getUTCFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+}
+
+function mapTarjeta(paymentMethodId: string): string {
+  const lower = (paymentMethodId ?? '').toLowerCase();
+  if (lower.includes('visa')) return 'Visa';
+  if (lower.includes('master')) return 'Mastercard';
+  if (lower.includes('amex')) return 'Amex';
+  if (lower.includes('debvisa')) return 'Visa Débito';
+  if (lower.includes('debmaster')) return 'Mastercard Débito';
+  return paymentMethodId || '-';
+}
+
+function mapStatus(s: string): string {
+  if (s === 'authorized') return 'Activa';
+  if (s === 'paused') return 'Pausada';
+  if (s === 'cancelled') return 'Cancelada';
+  return s ?? '-';
+}
+
 export const POST = withAuth(async (request: Request, user: any, supabase: any) => {
   try {
     const body = await request.json();
@@ -121,56 +145,90 @@ export const PATCH = withAuth(async (request: Request, user: any, supabase: any)
 
 export const GET = withAuth(async (request: Request, user: any, supabase: any) => {
   try {
-    const { data: dbSubscriptions, error } = await supabase
+    const { data, error } = await supabase
       .from('subscription')
-      .select('*')
-      .eq('responsible_user', user.id);
+      .select(`
+        id,
+        created_at,
+        is_active,
+        suscription_plan_id,
+        mp_subscription_id,
+        next_payment_date,
+        subscription_plan!suscription_plan_id (
+          name,
+          price,
+          duration_days
+        )
+      `)
+      .eq('responsible_user', user.id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
-    if (!dbSubscriptions || dbSubscriptions.length === 0) {
-      return NextResponse.json({ suscripciones: [] }, { status: 200 });
-    }
+    const mpAccessToken = process.env.MP_ACCESS_TOKEN;
 
-    const preapproval = new PreApproval(client);
+    const subscriptions = await Promise.all(
+      (data ?? []).map(async (sub: any) => {
+        const plan = sub.subscription_plan;
+        const durationDays: number = plan?.duration_days ?? 30;
+        const durationLabel =
+          durationDays === 180 ? 'Semestral' : durationDays === 30 ? 'Mensual' : `${durationDays} días`;
 
-    const suscripcionesCompletas = await Promise.all(
-      dbSubscriptions.map(async (subDB: any) => {
-        try {
-          const mpData = await preapproval.get({ id: subDB.mp_subscription_id });
-          return { ...subDB, mp_details: mpData };
-        } catch {
-          return { ...subDB, mp_details: null };
+        let proximoCobro = '-';
+        if (sub.next_payment_date) {
+          proximoCobro = formatDate(new Date(sub.next_payment_date));
+        } else {
+          const createdAt = new Date(sub.created_at);
+          const now = new Date();
+          const nextPayment = new Date(createdAt);
+          while (nextPayment <= now) nextPayment.setDate(nextPayment.getDate() + durationDays);
+          proximoCobro = formatDate(nextPayment);
         }
+
+        let tarjeta = '-';
+        let status = sub.is_active ? 'Activa' : 'Inactiva';
+        let ultimo_cobro = '-';
+        let ultimo_monto = '-';
+        let semaphore = '';
+
+        if (mpAccessToken && sub.mp_subscription_id) {
+          try {
+            const mpRes = await fetch(
+              `https://api.mercadopago.com/preapproval/${sub.mp_subscription_id}`,
+              { headers: { Authorization: `Bearer ${mpAccessToken}` }, cache: 'no-store' }
+            );
+            if (mpRes.ok) {
+              const mp = await mpRes.json();
+              tarjeta = mapTarjeta(mp.payment_method_id ?? '');
+              status = mapStatus(mp.status ?? '');
+              if (mp.next_payment_date) proximoCobro = formatDate(new Date(mp.next_payment_date));
+              if (mp.summarized?.last_charged_date) ultimo_cobro = formatDate(new Date(mp.summarized.last_charged_date));
+              if (mp.summarized?.last_charged_amount != null) ultimo_monto = `$${Number(mp.summarized.last_charged_amount).toLocaleString('es-CL')}`;
+              semaphore = mp.summarized?.semaphore ?? '';
+            }
+          } catch {
+            // fallback to local data if MP fetch fails
+          }
+        }
+
+        return {
+          id: String(sub.id),
+          mp_subscription_id: sub.mp_subscription_id ?? null,
+          plan_name: plan?.name ? `${plan.name} (${durationLabel})` : 'Plan',
+          status,
+          price: plan?.price != null ? `$${Number(plan.price).toLocaleString('es-CL')}` : '-',
+          monto: plan?.price != null ? Number(plan.price) : 0,
+          proximo_cobro: proximoCobro,
+          tarjeta,
+          ultimo_cobro,
+          ultimo_monto,
+          semaphore,
+        };
       })
     );
 
-    const suscripcionesActivas = suscripcionesCompletas
-      .filter((sub: any) => sub.mp_details && sub.mp_details.status === 'authorized')
-      .map((sub: any) => {
-        const auto_recurring = sub.mp_details.auto_recurring || {};
-        const freq = auto_recurring.frequency;
-        const freqType = auto_recurring.frequency_type;
-
-        let frecuenciaLegible = `${freq} ${freqType}`;
-        if (freq === 1 && freqType === 'months') frecuenciaLegible = 'Mensual';
-        else if (freq === 6 && freqType === 'months') frecuenciaLegible = 'Semestral';
-        else if (freq === 1 && freqType === 'years') frecuenciaLegible = 'Anual';
-
-        return {
-          id_local: sub.id,
-          mp_subscription_id: sub.mp_subscription_id,
-          status: sub.mp_details.status,
-          plan_name: sub.mp_details.reason || 'Plan sin nombre',
-          monto: auto_recurring.transaction_amount || 0,
-          moneda: auto_recurring.currency_id || 'CLP',
-          frecuencia: frecuenciaLegible,
-          tarjeta: sub.mp_details.payment_method_id || 'N/A',
-          proximo_cobro: sub.mp_details.next_payment_date
-        };
-      });
-
-    return NextResponse.json({ suscripciones: suscripcionesActivas }, { status: 200 });
+    return NextResponse.json(subscriptions);
 
   } catch (err: any) {
     console.error("Error obteniendo suscripciones:", err);
