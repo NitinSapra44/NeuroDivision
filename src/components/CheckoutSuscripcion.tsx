@@ -1,8 +1,8 @@
 'use client';
 
 import { initMercadoPago, CardPayment } from '@mercadopago/sdk-react';
-import { useEffect, useState } from 'react';
 
+// Initialize once at module level — runs on the client only (this is a 'use client' component)
 initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!, {
   locale: 'es-CL'
 });
@@ -14,34 +14,6 @@ interface Props {
 }
 
 export default function CheckoutSuscripcion({ planId, monto, onSubmit }: Props) {
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !isInitialized) {
-      initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!, {
-        locale: 'es-CL'
-      });
-      setIsInitialized(true);
-    }
-  }, [isInitialized]);
-
-  if (!isInitialized) return (
-    <div className="w-full min-h-105 flex flex-col gap-4 animate-pulse p-2">
-      <div className="h-10 bg-gray-200 rounded-full w-full" />
-      <div className="flex gap-3">
-        <div className="h-10 bg-gray-200 rounded-full flex-1" />
-        <div className="h-10 bg-gray-200 rounded-full flex-1" />
-      </div>
-      <div className="h-10 bg-gray-200 rounded-full w-full" />
-      <div className="h-10 bg-gray-200 rounded-full w-3/4" />
-      <div className="h-12 bg-gray-300 rounded-full w-full mt-4" />
-    </div>
-  );
-
-  const initialization = {
-    amount: monto
-  };
-
   const onError = async (error: any) => {
     console.error("Error en el Brick:", error);
   };
@@ -53,7 +25,7 @@ export default function CheckoutSuscripcion({ planId, monto, onSubmit }: Props) 
   return (
     <CardPayment
       key={planId}
-      initialization={initialization}
+      initialization={{ amount: monto }}
       onSubmit={onSubmit}
       onReady={onReady}
       onError={onError}
