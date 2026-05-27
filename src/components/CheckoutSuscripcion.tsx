@@ -25,7 +25,18 @@ export default function CheckoutSuscripcion({ planId, monto, onSubmit }: Props) 
     }
   }, [isInitialized]);
 
-  if (!isInitialized) return <p>Cargando pasarela de pago...</p>;
+  if (!isInitialized) return (
+    <div className="w-full min-h-105 flex flex-col gap-4 animate-pulse p-2">
+      <div className="h-10 bg-gray-200 rounded-full w-full" />
+      <div className="flex gap-3">
+        <div className="h-10 bg-gray-200 rounded-full flex-1" />
+        <div className="h-10 bg-gray-200 rounded-full flex-1" />
+      </div>
+      <div className="h-10 bg-gray-200 rounded-full w-full" />
+      <div className="h-10 bg-gray-200 rounded-full w-3/4" />
+      <div className="h-12 bg-gray-300 rounded-full w-full mt-4" />
+    </div>
+  );
 
   const initialization = {
     amount: monto
